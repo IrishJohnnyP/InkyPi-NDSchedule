@@ -18,6 +18,7 @@
           {% if g.opp_rank %}<span class="rank">#{{ g.opp_rank }}</span>{% endif %}
           {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="" />{% endif %}
           <span class="name">{{ g.opp_name }}</span>
+          {% if g.opp_record %}<span class="opp-rec">({{ g.opp_record }})</span>{% endif %}
         </div>
         <div class="location">{{ g.location }}</div>
         <div class="result {{ g.result_class }}">{{ g.result }}</div>
