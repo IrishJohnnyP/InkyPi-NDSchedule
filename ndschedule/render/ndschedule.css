@@ -54,12 +54,13 @@
   display: grid;
   grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
-  column-gap: 1.4dvw;
+  column-gap: 2.0dvw; /* increased spacing between columns */
   padding: 0.6dvh 0;
   border-bottom: 1px solid rgba(0,0,0,0.12);
 }
 
 .date {
+  padding-right: 0.8dvw; /* extra gap between kickoff time and opponent block */
   font-size: calc(min(1.95dvh, 1.95dvw) * var(--scale));
   font-weight: 700;
   width: 14ch;
@@ -121,7 +122,7 @@
 }
 
 .compact { padding: 2dvh 2.2dvw; }
-.compact .row { padding: 0.35dvh 0; column-gap: 1.0dvw; }
+.compact .row { padding: 0.35dvh 0; column-gap: 1.4dvw; }
 .compact .location { width: 16ch; }
 .compact .logo {
   width: calc(min(2.55dvh, 2.55dvw) * var(--scale));
