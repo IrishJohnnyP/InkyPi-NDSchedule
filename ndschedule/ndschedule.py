@@ -18,14 +18,12 @@ LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/c
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v9:
-      - Fix: results now display by using more robust 'final/completed' detection.
-      - Adds subtle visual cue: green for win, red for loss.
-      - Removes EST/EDT suffix; adds footnote "* All times Eastern".
-      - Times are always displayed in Eastern Time.
-
-    Notes:
-      - Rankings are only used/shown for the current season.
+    v10 fix:
+      - Scores were not displaying because ESPN sometimes returns score values as dicts/strings
+        and the completed status fields vary. We now:
+          * parse scores from int/float/str/dict/list
+          * show results whenever both scores are available AND game is final OR a winner flag exists.
+      - Keeps subtle color cues and Eastern-time-only display.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -164,11 +162,20 @@ class NdSchedule(BasePlugin):
     # ----------------------------
 
     def _safe_int(self, v: Any):
+        """Parse a score from int/float/str/dict/list. Returns None if not parseable."""
         try:
             if v is None:
                 return None
             if isinstance(v, (int, float)):
                 return int(v)
+            if isinstance(v, dict):
+                # common ESPN shapes
+                for k in ("value", "displayValue", "score"):
+                    if v.get(k) is not None:
+                        return self._safe_int(v.get(k))
+                return None
+            if isinstance(v, list) and v:
+                return self._safe_int(v[0])
             if isinstance(v, str):
                 s = v.strip()
                 if not s:
@@ -180,23 +187,24 @@ class NdSchedule(BasePlugin):
             return None
         return None
 
-    def _is_completed(self, comp: Dict[str, Any]) -> bool:
-        """Determine if a game is completed/final (schedule feeds vary)."""
+    def _is_finalish(self, comp: Dict[str, Any]) -> bool:
+        """Determine if a game is final/postgame."""
         if not isinstance(comp, dict):
             return False
         st = (comp.get("status") or {}).get("type") or {}
         if isinstance(st, dict):
             if st.get("completed") is True:
                 return True
-            name = str(st.get("name") or "")
-            state = str(st.get("state") or "")
-            detail = str(st.get("detail") or "")
-            if name.upper().startswith("STATUS_FINAL"):
+            if str(st.get("state") or "").lower() == "post":
                 return True
-            if state.lower() == "post":
-                return True
-            if detail.upper().startswith("FINAL"):
-                return True
+            for k in ("name", "detail", "shortDetail", "description"):
+                val = str(st.get(k) or "")
+                if val.upper().startswith("FINAL") or val.upper().startswith("STATUS_FINAL"):
+                    return True
+        # sometimes comp has status text
+        val = str(comp.get("status") or "")
+        if val.lower() in ("final", "post"):
+            return True
         return False
 
     def _eastern_tz(self):
@@ -355,21 +363,31 @@ class NdSchedule(BasePlugin):
 
             rk = rank_map.get(opp_id) if show_rank else None
 
+            # Scores / result
+            nd_score = self._safe_int(nd_side.get("score")) if nd_side else None
+            opp_score = self._safe_int(opp_side.get("score"))
+
+            has_winner_flag = False
+            try:
+                if nd_side and isinstance(nd_side.get('winner'), bool):
+                    has_winner_flag = True
+                if isinstance(opp_side.get('winner'), bool):
+                    has_winner_flag = True
+            except Exception:
+                pass
+
             result = ""
             result_class = ""
-            if self._is_completed(comp) and nd_side:
-                nd_score = self._safe_int(nd_side.get("score"))
-                opp_score = self._safe_int(opp_side.get("score"))
-                if nd_score is not None and opp_score is not None:
-                    if nd_score > opp_score:
-                        result = f"W {nd_score}-{opp_score}"
-                        result_class = "win"
-                    elif nd_score < opp_score:
-                        result = f"L {nd_score}-{opp_score}"
-                        result_class = "lose"
-                    else:
-                        result = f"T {nd_score}-{opp_score}"
-                        result_class = "tie"
+            if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
+                if nd_score > opp_score:
+                    result = f"W {nd_score}-{opp_score}"
+                    result_class = "win"
+                elif nd_score < opp_score:
+                    result = f"L {nd_score}-{opp_score}"
+                    result_class = "lose"
+                else:
+                    result = f"T {nd_score}-{opp_score}"
+                    result_class = "tie"
 
             rows.append({
                 "date": date_disp,
