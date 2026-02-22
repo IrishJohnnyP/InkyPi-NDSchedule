@@ -20,13 +20,10 @@ LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/c
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    Displays for the current season:
-      - Date (and kickoff time when available)
-      - Opponent rank (Top 25; CFP preferred, else AP)
-      - Opponent logo, name, record
-      - Final result if game completed
-
-    Title shows Notre Dame logo and: "Notre Dame Football Schedule for {YEAR}".
+    v5:
+      - Update line below title includes update time + rank source.
+      - Added game location.
+      - Dynamic season year selection.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -56,16 +53,24 @@ class NdSchedule(BasePlugin):
 
         nd_logo = self._fetch_team_logo(ttl)
 
-        rank_map, rank_label = self._get_rank_map(ttl)
+        rank_map, rank_label, rank_updated = self._get_rank_map(ttl, device_config)
         rows = self._build_rows(sched, rank_map, show_rank, device_config)
 
-        updated = self._format_updated(sched, device_config)
+        update_line = ""
+        if show_rank and rank_label:
+            if rank_updated:
+                update_line = f"Updated {rank_updated} • Rank source: {rank_label}"
+            else:
+                update_line = f"Rank source: {rank_label}"
+        else:
+            sched_updated = self._format_updated(sched, device_config)
+            if sched_updated:
+                update_line = f"Updated {sched_updated}"
 
         template_params = {
             "title": f"Notre Dame Football Schedule for {season_year}",
             "nd_logo": nd_logo,
-            "poll_date": updated,
-            "meta": f"Rank source: {rank_label}" if (show_rank and rank_label) else "",
+            "update_line": update_line,
             "rows": rows,
             "font_size": font_size,
             "compact_mode": compact_mode,
@@ -96,7 +101,6 @@ class NdSchedule(BasePlugin):
         return data
 
     def _detect_current_season_year(self, ttl: int) -> int:
-        """Use ESPN core league object season.year when available."""
         from datetime import datetime
         year_guess = datetime.now().year
         try:
@@ -127,7 +131,6 @@ class NdSchedule(BasePlugin):
             except Exception:
                 continue
 
-        # Try next year once if empty
         try:
             data = self._fetch_json_cached(f"{SCHEDULE_BASE_URL}?season={year+1}", ttl)
             if isinstance(data.get("events"), list) and data.get("events"):
@@ -154,32 +157,37 @@ class NdSchedule(BasePlugin):
     # Rankings
     # ----------------------------
 
-    def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str]:
+    def _get_rank_map(self, ttl: int, device_config) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
         polls = data.get("rankings")
         if isinstance(polls, dict):
             polls = polls.get("items") or polls.get("rankings")
         if not isinstance(polls, list):
-            return {}, ""
+            return {}, "", ""
 
         def norm(s: Any) -> str:
             return str(s or "").strip().lower()
 
-        def parse_date(p: Dict[str, Any]) -> float:
-            import datetime
+        def poll_iso(p: Dict[str, Any]) -> str:
             for k in ("date", "lastUpdated", "lastUpdate", "updated", "updateDate"):
                 v = p.get(k)
-                if not v:
-                    continue
-                try:
-                    ds = str(v).replace("Z", "+00:00")
-                    dt = datetime.datetime.fromisoformat(ds)
-                    if dt.tzinfo is None:
-                        dt = dt.replace(tzinfo=datetime.timezone.utc)
-                    return dt.timestamp()
-                except Exception:
-                    pass
-            return 0.0
+                if v:
+                    return str(v)
+            return ""
+
+        def poll_epoch(p: Dict[str, Any]) -> float:
+            import datetime
+            iso = poll_iso(p)
+            if not iso:
+                return 0.0
+            try:
+                ds = iso.replace('Z', '+00:00')
+                dt = datetime.datetime.fromisoformat(ds)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=datetime.timezone.utc)
+                return dt.timestamp()
+            except Exception:
+                return 0.0
 
         def is_cfp(p: Dict[str, Any]) -> bool:
             n = norm(p.get("name"))
@@ -198,14 +206,16 @@ class NdSchedule(BasePlugin):
 
         cfp = [p for p in polls if isinstance(p, dict) and is_cfp(p)]
         ap = [p for p in polls if isinstance(p, dict) and is_ap(p)]
-        cfp.sort(key=parse_date, reverse=True)
-        ap.sort(key=parse_date, reverse=True)
+        cfp.sort(key=poll_epoch, reverse=True)
+        ap.sort(key=poll_epoch, reverse=True)
 
         poll = cfp[0] if cfp else (ap[0] if ap else None)
         if not poll:
-            return {}, ""
+            return {}, "", ""
 
         label = (poll.get("shortName") or poll.get("name") or "").strip()
+        updated_iso = poll_iso(poll)
+        updated_fmt = self._format_iso_datetime(updated_iso, device_config) if updated_iso else ""
 
         ranks = poll.get("ranks")
         if isinstance(ranks, dict):
@@ -229,7 +239,7 @@ class NdSchedule(BasePlugin):
                 pass
 
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
-        return rank_map, label
+        return rank_map, label, updated_fmt
 
     # ----------------------------
     # Rows
@@ -240,7 +250,7 @@ class NdSchedule(BasePlugin):
         if not isinstance(events, list):
             events = []
 
-        rows = []
+        rows: List[Dict[str, Any]] = []
         for ev in events:
             if not isinstance(ev, dict):
                 continue
@@ -256,6 +266,7 @@ class NdSchedule(BasePlugin):
                 comp = ev
 
             date_disp = self._format_game_datetime(iso_date, comp, device_config)
+            location_disp = self._format_location(comp)
 
             competitors = (comp.get("competitors") or []) if isinstance(comp, dict) else []
             if not isinstance(competitors, list):
@@ -309,6 +320,7 @@ class NdSchedule(BasePlugin):
 
             rk = rank_map.get(opp_id) if show_rank else None
 
+            # result/score
             result = ""
             status = (comp.get("status") or {}).get("type") if isinstance(comp, dict) else {}
             completed = bool(status.get("completed")) if isinstance(status, dict) else False
@@ -326,6 +338,7 @@ class NdSchedule(BasePlugin):
                 "opp_rank": rk,
                 "logo": logo,
                 "opp_name": opp_name,
+                "location": location_disp,
                 "opp_record": opp_record,
                 "result": result,
             })
@@ -333,8 +346,19 @@ class NdSchedule(BasePlugin):
         return rows
 
     # ----------------------------
-    # Formatting
+    # Formatting helpers
     # ----------------------------
+
+    def _format_location(self, comp: Dict[str, Any]) -> str:
+        if not isinstance(comp, dict):
+            return ""
+        venue = comp.get("venue")
+        if not isinstance(venue, dict):
+            return ""
+        address = venue.get("address")
+        if isinstance(address, dict) and address.get("city") and address.get("state"):
+            return f"{address.get('city')}, {address.get('state')}"
+        return venue.get("fullName") or venue.get("name") or ""
 
     def _get_tzinfo(self, device_config):
         try:
@@ -348,6 +372,27 @@ class NdSchedule(BasePlugin):
             return ZoneInfo(tz_name)
         except Exception:
             return None
+
+    def _format_iso_datetime(self, iso_str: str, device_config) -> str:
+        from datetime import datetime, timezone
+        if not iso_str:
+            return ""
+        tzinfo = self._get_tzinfo(device_config)
+        try:
+            ds = iso_str.replace('Z', '+00:00')
+            dt = datetime.fromisoformat(ds)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
+            date_part = dt_local.strftime('%b %d, %Y')
+            hour = dt_local.strftime('%I').lstrip('0') or '12'
+            minute = dt_local.strftime('%M')
+            ampm = dt_local.strftime('%p')
+            tz_abbr = (dt_local.strftime('%Z') or '').strip()
+            time_part = f"{hour}:{minute} {ampm}" + (f" {tz_abbr}" if tz_abbr else "")
+            return f"{date_part} {time_part}"
+        except Exception:
+            return iso_str
 
     def _format_game_datetime(self, iso_str: str, comp: Dict[str, Any], device_config) -> str:
         from datetime import datetime, timezone
@@ -388,7 +433,6 @@ class NdSchedule(BasePlugin):
             return iso_str[:10]
 
     def _format_updated(self, data: Dict[str, Any], device_config) -> str:
-        from datetime import datetime, timezone
         date_str = None
         for k in ("timestamp", "lastUpdated", "date", "updateDate"):
             v = data.get(k)
@@ -398,6 +442,7 @@ class NdSchedule(BasePlugin):
         if not date_str:
             return ""
 
+        from datetime import datetime, timezone
         tzinfo = self._get_tzinfo(device_config)
         try:
             if date_str.isdigit() and len(date_str) >= 12:
