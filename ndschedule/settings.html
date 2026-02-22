@@ -8,14 +8,15 @@
   </select>
 </div>
 
-<!-- single source of truth hidden bools -->
+<!-- Hidden fields are the single source of truth for boolean settings -->
 <input type="hidden" id="compact_mode" name="compact_mode" value="false" />
+<input type="hidden" id="show_rank" name="show_rank" value="true" />
+
 <div class="form-check mt-3">
   <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
   <label class="form-check-label" for="compact_mode_checkbox">Compact mode</label>
 </div>
 
-<input type="hidden" id="show_rank" name="show_rank" value="true" />
 <div class="form-check mt-2">
   <input class="form-check-input" type="checkbox" id="show_rank_checkbox">
   <label class="form-check-label" for="show_rank_checkbox">Show opponent rank (CFP preferred, else AP)</label>
@@ -47,7 +48,6 @@
     if (typeof loadPluginSettings !== 'undefined') {
       document.getElementById('font_size').value = pluginSettings.font_size || 'normal';
       document.getElementById('cache_minutes').value = pluginSettings.cache_minutes || 30;
-
       document.getElementById('compact_mode_checkbox').checked = toBool(pluginSettings.compact_mode, false);
       document.getElementById('show_rank_checkbox').checked = toBool(pluginSettings.show_rank, true);
     } else {
