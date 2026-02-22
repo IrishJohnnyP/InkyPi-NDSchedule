@@ -56,7 +56,7 @@
 .date {
   font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
   font-weight: 700;
-  width: 7ch;
+  width: 14ch;
 }
 
 .opp {
