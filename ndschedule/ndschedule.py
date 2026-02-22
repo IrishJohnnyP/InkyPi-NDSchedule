@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 from plugins.base_plugin.base_plugin import BasePlugin
 from utils.http_client import get_http_session
@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 ND_TEAM_ID = 87
 
 TEAM_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}"
-SCHEDULE_BASE_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}/schedule"
 RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
 LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football?lang=en&region=us"
 
@@ -18,12 +17,14 @@ LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/c
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v10 fix:
-      - Scores were not displaying because ESPN sometimes returns score values as dicts/strings
-        and the completed status fields vary. We now:
-          * parse scores from int/float/str/dict/list
-          * show results whenever both scores are available AND game is final OR a winner flag exists.
-      - Keeps subtle color cues and Eastern-time-only display.
+    v11:
+      - Fix visual cues: add both color + dot indicator to survive color-limited displays.
+      - Add opponent record as of the day before each game (computed from opponent schedule).
+      - Keeps Eastern-only times and score/result display.
+
+    Notes:
+      - Rankings only used for the current season.
+      - Opponent pregame record is computed by summing completed games with date < game date.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -55,7 +56,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
-        sched = self._fetch_schedule_for_year(season_year, ttl)
+        sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
         effective_show_rank = bool(show_rank_setting and season_year == current_year)
@@ -65,7 +66,7 @@ class NdSchedule(BasePlugin):
         if effective_show_rank:
             rank_map, rank_label, rank_updated = self._get_rank_map(ttl)
 
-        rows = self._build_rows(sched, rank_map, effective_show_rank)
+        rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl)
 
         update_line = ""
         if effective_show_rank and rank_label:
@@ -100,7 +101,7 @@ class NdSchedule(BasePlugin):
             return self._cache["data"][url]
 
         session = get_http_session()
-        resp = session.get(url, timeout=20)
+        resp = session.get(url, timeout=25)
         resp.raise_for_status()
         data = resp.json()
 
@@ -122,15 +123,16 @@ class NdSchedule(BasePlugin):
             pass
         return year_guess
 
-    def _fetch_schedule_for_year(self, year: int, ttl: int) -> Dict[str, Any]:
+    def _fetch_schedule_for_year(self, team_id: int, year: int, ttl: int) -> Dict[str, Any]:
+        base = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{team_id}/schedule"
         candidates = [
-            f"{SCHEDULE_BASE_URL}?season={year}",
-            f"{SCHEDULE_BASE_URL}?year={year}",
-            f"{SCHEDULE_BASE_URL}?season={year}&seasontype=2",
-            f"{SCHEDULE_BASE_URL}?season={year}&seasontype=3",
-            f"{SCHEDULE_BASE_URL}?year={year}&seasontype=2",
-            f"{SCHEDULE_BASE_URL}?year={year}&seasontype=3",
-            SCHEDULE_BASE_URL,
+            f"{base}?season={year}",
+            f"{base}?year={year}",
+            f"{base}?season={year}&seasontype=2",
+            f"{base}?season={year}&seasontype=3",
+            f"{base}?year={year}&seasontype=2",
+            f"{base}?year={year}&seasontype=3",
+            base,
         ]
         last = None
         for url in candidates:
@@ -161,15 +163,13 @@ class NdSchedule(BasePlugin):
     # Helpers
     # ----------------------------
 
-    def _safe_int(self, v: Any):
-        """Parse a score from int/float/str/dict/list. Returns None if not parseable."""
+    def _safe_int(self, v: Any) -> Optional[int]:
         try:
             if v is None:
                 return None
             if isinstance(v, (int, float)):
                 return int(v)
             if isinstance(v, dict):
-                # common ESPN shapes
                 for k in ("value", "displayValue", "score"):
                     if v.get(k) is not None:
                         return self._safe_int(v.get(k))
@@ -187,8 +187,16 @@ class NdSchedule(BasePlugin):
             return None
         return None
 
+    def _parse_iso(self, iso_str: str):
+        from datetime import datetime
+        if not iso_str:
+            return None
+        try:
+            return datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
+        except Exception:
+            return None
+
     def _is_finalish(self, comp: Dict[str, Any]) -> bool:
-        """Determine if a game is final/postgame."""
         if not isinstance(comp, dict):
             return False
         st = (comp.get("status") or {}).get("type") or {}
@@ -201,7 +209,6 @@ class NdSchedule(BasePlugin):
                 val = str(st.get(k) or "")
                 if val.upper().startswith("FINAL") or val.upper().startswith("STATUS_FINAL"):
                     return True
-        # sometimes comp has status text
         val = str(comp.get("status") or "")
         if val.lower() in ("final", "post"):
             return True
@@ -214,8 +221,75 @@ class NdSchedule(BasePlugin):
         except Exception:
             return None
 
+    def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
+        if not opp_team_id or not game_dt_utc:
+            return ""
+
+        opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
+        events = opp_sched.get("events") or []
+        if not isinstance(events, list) or not events:
+            return ""
+
+        wins = losses = ties = 0
+        for ev in events:
+            if not isinstance(ev, dict):
+                continue
+            ev_dt = self._parse_iso(str(ev.get("date") or ""))
+            if not ev_dt or ev_dt >= game_dt_utc:
+                continue
+
+            comps = ev.get("competitions")
+            if isinstance(comps, list) and comps:
+                comp = comps[0]
+            elif isinstance(ev.get("competitions"), dict):
+                comp = ev.get("competitions")
+            else:
+                comp = ev
+            if not isinstance(comp, dict):
+                continue
+
+            competitors = comp.get("competitors") or []
+            if not isinstance(competitors, list) or len(competitors) < 2:
+                continue
+
+            my_side = None
+            other_side = None
+            for c in competitors:
+                if not isinstance(c, dict):
+                    continue
+                team = c.get("team") or {}
+                if str(team.get("id")) == str(opp_team_id):
+                    my_side = c
+                else:
+                    other_side = c
+            if not my_side or not other_side:
+                continue
+
+            my_score = self._safe_int(my_side.get("score"))
+            other_score = self._safe_int(other_side.get("score"))
+            winner_flag = my_side.get('winner')
+
+            if my_score is None or other_score is None:
+                if isinstance(winner_flag, bool):
+                    wins += 1 if winner_flag else 0
+                    losses += 0 if winner_flag else 1
+                continue
+
+            if isinstance(winner_flag, bool):
+                wins += 1 if winner_flag else 0
+                losses += 0 if winner_flag else 1
+            else:
+                if my_score > other_score:
+                    wins += 1
+                elif my_score < other_score:
+                    losses += 1
+                else:
+                    ties += 1
+
+        return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
+
     # ----------------------------
-    # Rankings (only called for current season)
+    # Rankings
     # ----------------------------
 
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
@@ -306,7 +380,7 @@ class NdSchedule(BasePlugin):
     # Rows
     # ----------------------------
 
-    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool) -> List[Dict[str, Any]]:
+    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list):
             events = []
@@ -316,7 +390,8 @@ class NdSchedule(BasePlugin):
             if not isinstance(ev, dict):
                 continue
 
-            iso_date = ev.get("date") or ""
+            iso_date = str(ev.get("date") or "")
+            game_dt = self._parse_iso(iso_date)
 
             comps = ev.get("competitions")
             if isinstance(comps, list) and comps:
@@ -363,7 +438,13 @@ class NdSchedule(BasePlugin):
 
             rk = rank_map.get(opp_id) if show_rank else None
 
-            # Scores / result
+            opp_record = ""
+            if game_dt is not None and opp_id:
+                try:
+                    opp_record = self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl)
+                except Exception:
+                    opp_record = ""
+
             nd_score = self._safe_int(nd_side.get("score")) if nd_side else None
             opp_score = self._safe_int(opp_side.get("score"))
 
@@ -394,6 +475,7 @@ class NdSchedule(BasePlugin):
                 "opp_rank": rk,
                 "logo": logo,
                 "opp_name": opp_name,
+                "opp_record": opp_record,
                 "location": location_disp,
                 "result": result,
                 "result_class": result_class,
