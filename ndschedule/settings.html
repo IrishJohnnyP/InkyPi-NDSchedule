@@ -1,0 +1,65 @@
+<div class="form-group">
+  <label for="font_size" class="form-label">Font size</label>
+  <select class="form-select" id="font_size" name="font_size">
+    <option value="normal">Normal</option>
+    <option value="large">Large</option>
+    <option value="larger">Larger</option>
+    <option value="largest">Largest</option>
+  </select>
+</div>
+
+<!-- single source of truth hidden bools -->
+<input type="hidden" id="compact_mode" name="compact_mode" value="false" />
+<div class="form-check mt-3">
+  <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
+  <label class="form-check-label" for="compact_mode_checkbox">Compact mode</label>
+</div>
+
+<input type="hidden" id="show_rank" name="show_rank" value="true" />
+<div class="form-check mt-2">
+  <input class="form-check-input" type="checkbox" id="show_rank_checkbox">
+  <label class="form-check-label" for="show_rank_checkbox">Show opponent rank (CFP preferred, else AP)</label>
+</div>
+
+<div class="form-group mt-3">
+  <label for="cache_minutes" class="form-label">Cache (minutes)</label>
+  <input class="form-control" type="number" id="cache_minutes" name="cache_minutes" min="0" max="1440" value="30">
+  <small class="form-text text-muted">0 disables caching.</small>
+</div>
+
+<script>
+  function toBool(v, fallback=true) {
+    if (v === undefined || v === null) return fallback;
+    if (typeof v === 'boolean') return v;
+    const s = String(v).toLowerCase().trim();
+    if (['1','true','yes','on','checked'].includes(s)) return true;
+    if (['0','false','no','off',''].includes(s)) return false;
+    return fallback;
+  }
+  function syncHidden(hiddenId, checkboxId) {
+    const hidden = document.getElementById(hiddenId);
+    const cb = document.getElementById(checkboxId);
+    if (!hidden || !cb) return;
+    hidden.value = cb.checked ? 'true' : 'false';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof loadPluginSettings !== 'undefined') {
+      document.getElementById('font_size').value = pluginSettings.font_size || 'normal';
+      document.getElementById('cache_minutes').value = pluginSettings.cache_minutes || 30;
+
+      document.getElementById('compact_mode_checkbox').checked = toBool(pluginSettings.compact_mode, false);
+      document.getElementById('show_rank_checkbox').checked = toBool(pluginSettings.show_rank, true);
+    } else {
+      document.getElementById('compact_mode_checkbox').checked = false;
+      document.getElementById('show_rank_checkbox').checked = true;
+      document.getElementById('font_size').value = 'normal';
+    }
+
+    syncHidden('compact_mode','compact_mode_checkbox');
+    syncHidden('show_rank','show_rank_checkbox');
+
+    document.getElementById('compact_mode_checkbox').addEventListener('change', () => syncHidden('compact_mode','compact_mode_checkbox'));
+    document.getElementById('show_rank_checkbox').addEventListener('change', () => syncHidden('show_rank','show_rank_checkbox'));
+  });
+</script>
