@@ -20,9 +20,11 @@
           <span class="name">{{ g.opp_name }}</span>
         </div>
         <div class="location">{{ g.location }}</div>
-        <div class="result">{{ g.result }}</div>
+        <div class="result {{ g.result_class }}">{{ g.result }}</div>
       </div>
     {% endfor %}
   </div>
+
+  <div class="footnote">* All times Eastern</div>
 </div>
 {% endblock %}

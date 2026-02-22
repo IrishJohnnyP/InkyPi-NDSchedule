@@ -110,6 +110,17 @@
   text-align: right;
 }
 
+/* Subtle result cues (e-ink friendly) */
+.result.win { color: #0a7d00; }
+.result.lose { color: #b00020; }
+.result.tie { color: #444444; }
+
+.footnote {
+  margin-top: 0.9dvh;
+  font-size: calc(min(1.6dvh, 1.6dvw) * var(--scale));
+  opacity: 0.75;
+}
+
 .compact {
   padding: 2.0dvh 2.2dvw;
 }
