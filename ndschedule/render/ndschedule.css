@@ -14,14 +14,7 @@
 .font-larger { --scale: 1.25; --title-scale: 1.12; }
 .font-largest{ --scale: 1.40; --title-scale: 1.18; }
 
-.header { margin-bottom: 1.8dvh; }
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2dvw;
-}
+.header { margin-bottom: 1.6dvh; }
 
 .titlewrap {
   display: flex;
@@ -46,32 +39,28 @@
   text-overflow: ellipsis;
 }
 
-.updated {
+.update-line {
+  margin-top: 0.5dvh;
   font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
   opacity: 0.80;
-  text-align: right;
   white-space: nowrap;
-}
-
-.meta {
-  margin-top: 0.6dvh;
-  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
-  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list { display: block; }
 
 .row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
-  column-gap: 1.6dvw;
+  column-gap: 1.4dvw;
   padding: 0.6dvh 0;
   border-bottom: 1px solid rgba(0,0,0,0.12);
 }
 
 .date {
-  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
+  font-size: calc(min(1.95dvh, 1.95dvw) * var(--scale));
   font-weight: 700;
   width: 14ch;
   white-space: nowrap;
@@ -80,33 +69,43 @@
 .opp {
   display: flex;
   align-items: center;
-  gap: 1.0dvw;
+  gap: 0.9dvw;
   min-width: 0;
 }
 
 .rank {
   font-weight: 800;
-  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
+  font-size: calc(min(1.95dvh, 1.95dvw) * var(--scale));
   width: 3.5ch;
 }
 
 .logo {
-  width: calc(min(3.0dvh, 3.0dvw) * var(--scale));
-  height: calc(min(3.0dvh, 3.0dvw) * var(--scale));
+  width: calc(min(2.9dvh, 2.9dvw) * var(--scale));
+  height: calc(min(2.9dvh, 2.9dvw) * var(--scale));
   object-fit: contain;
   filter: grayscale(100%) contrast(125%);
 }
 
 .name {
-  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
+  font-size: calc(min(2.15dvh, 2.15dvw) * var(--scale));
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.location {
+  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 18ch;
+  text-align: left;
+}
+
 .record {
-  font-size: calc(min(1.9dvh, 1.9dvw) * var(--scale));
+  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
   opacity: 0.9;
   white-space: nowrap;
   width: 7ch;
@@ -114,7 +113,7 @@
 }
 
 .result {
-  font-size: calc(min(1.9dvh, 1.9dvw) * var(--scale));
+  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
   font-weight: 800;
   white-space: nowrap;
   width: 10ch;
@@ -122,10 +121,11 @@
 }
 
 .compact { padding: 2dvh 2.2dvw; }
-.compact .row { padding: 0.35dvh 0; column-gap: 1.1dvw; }
+.compact .row { padding: 0.35dvh 0; column-gap: 1.0dvw; }
+.compact .location { width: 16ch; }
 .compact .logo {
-  width: calc(min(2.6dvh, 2.6dvw) * var(--scale));
-  height: calc(min(2.6dvh, 2.6dvw) * var(--scale));
+  width: calc(min(2.55dvh, 2.55dvw) * var(--scale));
+  height: calc(min(2.55dvh, 2.55dvw) * var(--scale));
 }
 
 @media (max-aspect-ratio: 1) {
