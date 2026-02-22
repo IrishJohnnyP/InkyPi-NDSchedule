@@ -1,0 +1,28 @@
+{% extends "plugin.html" %}
+
+{% block content %}
+<div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %}">
+  <div class="header">
+    <div class="topbar">
+      <div class="title">{{ title }}</div>
+      {% if poll_date %}<div class="updated">{{ poll_date }}</div>{% endif %}
+    </div>
+    {% if meta %}<div class="meta">Rank source: {{ meta }}</div>{% endif %}
+  </div>
+
+  <div class="list">
+    {% for g in rows %}
+      <div class="row">
+        <div class="date">{{ g.date }}</div>
+        <div class="opp">
+          {% if g.opp_rank %}<span class="rank">#{{ g.opp_rank }}</span>{% endif %}
+          {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="" />{% endif %}
+          <span class="name">{{ g.opp_name }}</span>
+        </div>
+        <div class="record">{{ g.opp_record }}</div>
+        <div class="result">{{ g.result }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
