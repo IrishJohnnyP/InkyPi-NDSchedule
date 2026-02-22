@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from plugins.base_plugin.base_plugin import BasePlugin
 from utils.http_client import get_http_session
@@ -8,15 +8,25 @@ from utils.http_client import get_http_session
 logger = logging.getLogger(__name__)
 
 ND_TEAM_ID = 87
-SCHEDULE_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}/schedule"
+
+TEAM_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}"
+SCHEDULE_BASE_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}/schedule"
 RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
+
+# Detect current league season year
+LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football?lang=en&region=us"
 
 
 class NdSchedule(BasePlugin):
-    """Notre Dame schedule plugin.
+    """Notre Dame Football schedule.
 
-    Shows: date (+ kickoff time if available), opponent rank (CFP preferred else AP), logo, name,
-    opponent record, and final result if completed.
+    Displays for the current season:
+      - Date (and kickoff time when available)
+      - Opponent rank (Top 25; CFP preferred, else AP)
+      - Opponent logo, name, record
+      - Final result if game completed
+
+    Title shows Notre Dame logo and: "Notre Dame Football Schedule for {YEAR}".
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -41,14 +51,19 @@ class NdSchedule(BasePlugin):
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
 
-        sched = self._fetch_json_cached(SCHEDULE_URL, ttl)
-        rank_map, rank_label = self._get_rank_map(ttl)
+        season_year = self._detect_current_season_year(ttl)
+        sched = self._fetch_schedule_for_year(season_year, ttl)
 
+        nd_logo = self._fetch_team_logo(ttl)
+
+        rank_map, rank_label = self._get_rank_map(ttl)
         rows = self._build_rows(sched, rank_map, show_rank, device_config)
+
         updated = self._format_updated(sched, device_config)
 
         template_params = {
-            "title": "Notre Dame Schedule",
+            "title": f"Notre Dame Football Schedule for {season_year}",
+            "nd_logo": nd_logo,
             "poll_date": updated,
             "meta": f"Rank source: {rank_label}" if (show_rank and rank_label) else "",
             "rows": rows,
@@ -60,7 +75,7 @@ class NdSchedule(BasePlugin):
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
     # ----------------------------
-    # Data
+    # HTTP + caching
     # ----------------------------
 
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
@@ -80,8 +95,66 @@ class NdSchedule(BasePlugin):
 
         return data
 
+    def _detect_current_season_year(self, ttl: int) -> int:
+        """Use ESPN core league object season.year when available."""
+        from datetime import datetime
+        year_guess = datetime.now().year
+        try:
+            core = self._fetch_json_cached(LEAGUE_CORE_URL, ttl)
+            season = core.get("season")
+            if isinstance(season, dict) and season.get("year"):
+                return int(season.get("year"))
+        except Exception:
+            pass
+        return year_guess
+
+    def _fetch_schedule_for_year(self, year: int, ttl: int) -> Dict[str, Any]:
+        candidates = [
+            f"{SCHEDULE_BASE_URL}?season={year}",
+            f"{SCHEDULE_BASE_URL}?year={year}",
+            f"{SCHEDULE_BASE_URL}?season={year}&seasontype=2",
+            f"{SCHEDULE_BASE_URL}?year={year}&seasontype=2",
+            SCHEDULE_BASE_URL,
+        ]
+        last = None
+        for url in candidates:
+            try:
+                data = self._fetch_json_cached(url, ttl)
+                last = data
+                events = data.get("events")
+                if isinstance(events, list) and events:
+                    return data
+            except Exception:
+                continue
+
+        # Try next year once if empty
+        try:
+            data = self._fetch_json_cached(f"{SCHEDULE_BASE_URL}?season={year+1}", ttl)
+            if isinstance(data.get("events"), list) and data.get("events"):
+                return data
+        except Exception:
+            pass
+
+        return last or {"events": []}
+
+    def _fetch_team_logo(self, ttl: int) -> str:
+        try:
+            data = self._fetch_json_cached(TEAM_URL, ttl)
+            team = data.get("team") if isinstance(data.get("team"), dict) else data
+            logos = (team.get("logos") or []) if isinstance(team, dict) else []
+            if isinstance(logos, list):
+                for item in logos:
+                    if isinstance(item, dict) and item.get("href"):
+                        return item.get("href")
+        except Exception:
+            pass
+        return f"https://a.espncdn.com/i/teamlogos/ncaa/500/{ND_TEAM_ID}.png"
+
+    # ----------------------------
+    # Rankings
+    # ----------------------------
+
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str]:
-        """Return teamId->rank (Top 25) using CFP poll if present else AP."""
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
         polls = data.get("rankings")
         if isinstance(polls, dict):
@@ -277,13 +350,11 @@ class NdSchedule(BasePlugin):
             return None
 
     def _format_game_datetime(self, iso_str: str, comp: Dict[str, Any], device_config) -> str:
-        """Format game date; include kickoff time when available."""
         from datetime import datetime, timezone
         if not iso_str:
             return "TBD"
 
         tzinfo = self._get_tzinfo(device_config)
-
         time_tbd = False
         try:
             if isinstance(comp, dict):
@@ -304,7 +375,6 @@ class NdSchedule(BasePlugin):
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
 
             date_part = dt_local.strftime('%b %d')
-
             if time_tbd and dt_local.hour == 0 and dt_local.minute == 0:
                 return date_part
 
@@ -318,7 +388,6 @@ class NdSchedule(BasePlugin):
             return iso_str[:10]
 
     def _format_updated(self, data: Dict[str, Any], device_config) -> str:
-        """Show date/time only."""
         from datetime import datetime, timezone
         date_str = None
         for k in ("timestamp", "lastUpdated", "date", "updateDate"):
