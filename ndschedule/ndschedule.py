@@ -20,9 +20,13 @@ LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/c
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v6:
-      - Season year selectable (last 5 years). Defaults to current season.
-      - Rankings only displayed for the current season (CFP preferred, else AP).
+    v7:
+      - Increased spacing between kickoff time and opponent logo (CSS).
+      - Fixed occasional bad score/record values appearing as JSON like "[{..." by sanitizing.
+
+    Other features retained:
+      - Season year selectable (last 5 years), default current season.
+      - Rankings only for current season (CFP preferred, else AP).
       - Result shown as W/L from Notre Dame perspective followed by score.
       - Update line below title includes update time + rank source.
       - Includes game location.
@@ -60,7 +64,6 @@ class NdSchedule(BasePlugin):
         sched = self._fetch_schedule_for_year(season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
-        # Only use rankings for the current year
         effective_show_rank = bool(show_rank_setting and season_year == current_year)
         rank_map: Dict[str, int] = {}
         rank_label = ""
@@ -129,7 +132,6 @@ class NdSchedule(BasePlugin):
         return year_guess
 
     def _fetch_schedule_for_year(self, year: int, ttl: int) -> Dict[str, Any]:
-        # Try common variants; include postseason for past seasons
         candidates = [
             f"{SCHEDULE_BASE_URL}?season={year}",
             f"{SCHEDULE_BASE_URL}?year={year}",
@@ -149,7 +151,6 @@ class NdSchedule(BasePlugin):
                     return data
             except Exception:
                 continue
-
         return last or {"events": []}
 
     def _fetch_team_logo(self, ttl: int) -> str:
@@ -164,6 +165,45 @@ class NdSchedule(BasePlugin):
         except Exception:
             pass
         return f"https://a.espncdn.com/i/teamlogos/ncaa/500/{ND_TEAM_ID}.png"
+
+    # ----------------------------
+    # Helpers
+    # ----------------------------
+
+    def _safe_record_text(self, v: Any) -> str:
+        """Safely extract a record summary string from possible ESPN shapes."""
+        if v is None:
+            return ""
+        if isinstance(v, str):
+            return v
+        if isinstance(v, (int, float)):
+            return str(v)
+        if isinstance(v, dict):
+            for k in ("summary", "displayValue", "value"):
+                if v.get(k):
+                    return str(v.get(k))
+            return ""
+        if isinstance(v, list) and v:
+            return self._safe_record_text(v[0])
+        return ""
+
+    def _safe_int(self, v: Any):
+        """Parse an int from ESPN values; return None if not possible."""
+        try:
+            if v is None:
+                return None
+            if isinstance(v, (int, float)):
+                return int(v)
+            if isinstance(v, str):
+                s = v.strip()
+                if not s:
+                    return None
+                if s.isdigit() or (s.startswith('-') and s[1:].isdigit()):
+                    return int(s)
+                return int(float(s))
+        except Exception:
+            return None
+        return None
 
     # ----------------------------
     # Rankings
@@ -319,25 +359,23 @@ class NdSchedule(BasePlugin):
                     if isinstance(r, dict) and r.get("type") in ("total", "overall"):
                         opp_record = r.get("summary") or r.get("displayValue") or ""
                         break
-                if not opp_record and isinstance(recs[0], dict):
-                    opp_record = recs[0].get("summary") or recs[0].get("displayValue") or ""
+                if not opp_record:
+                    opp_record = self._safe_record_text(recs[0])
             if not opp_record:
-                opp_record = opp_side.get("record") or ""
+                opp_record = self._safe_record_text(opp_side.get("record"))
+            opp_record = self._safe_record_text(opp_record)
 
             rk = rank_map.get(opp_id) if show_rank else None
 
-            # Result as W/L from ND perspective
             result = ""
             status = (comp.get("status") or {}).get("type") if isinstance(comp, dict) else {}
             completed = bool(status.get("completed")) if isinstance(status, dict) else False
             if completed and nd_side:
-                try:
-                    nd_score = int(float(nd_side.get("score") or 0))
-                    opp_score = int(float(opp_side.get("score") or 0))
+                nd_score = self._safe_int(nd_side.get("score"))
+                opp_score = self._safe_int(opp_side.get("score"))
+                if nd_score is not None and opp_score is not None:
                     wl = "W" if nd_score > opp_score else ("L" if nd_score < opp_score else "T")
                     result = f"{wl} {nd_score}-{opp_score}"
-                except Exception:
-                    pass
 
             rows.append({
                 "date": date_disp,
