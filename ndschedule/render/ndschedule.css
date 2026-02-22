@@ -19,14 +19,31 @@
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 2dvw;
+}
+
+.titlewrap {
+  display: flex;
+  align-items: center;
+  gap: 1.0dvw;
+  min-width: 0;
+}
+
+.title-logo {
+  width: calc(min(3.4dvh, 3.4dvw) * var(--scale));
+  height: calc(min(3.4dvh, 3.4dvw) * var(--scale));
+  object-fit: contain;
+  filter: grayscale(100%) contrast(125%);
 }
 
 .title {
   font-size: calc(min(4.0dvh, 4.0dvw) * var(--title-scale));
   font-weight: 800;
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .updated {
@@ -54,9 +71,10 @@
 }
 
 .date {
-  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
+  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
   font-weight: 700;
   width: 14ch;
+  white-space: nowrap;
 }
 
 .opp {
@@ -68,7 +86,7 @@
 
 .rank {
   font-weight: 800;
-  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
+  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
   width: 3.5ch;
 }
 
@@ -80,7 +98,7 @@
 }
 
 .name {
-  font-size: calc(min(2.4dvh, 2.4dvw) * var(--scale));
+  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -88,7 +106,7 @@
 }
 
 .record {
-  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
+  font-size: calc(min(1.9dvh, 1.9dvw) * var(--scale));
   opacity: 0.9;
   white-space: nowrap;
   width: 7ch;
@@ -96,7 +114,7 @@
 }
 
 .result {
-  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
+  font-size: calc(min(1.9dvh, 1.9dvw) * var(--scale));
   font-weight: 800;
   white-space: nowrap;
   width: 10ch;

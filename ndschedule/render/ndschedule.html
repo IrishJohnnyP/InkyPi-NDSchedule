@@ -4,7 +4,10 @@
 <div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %}">
   <div class="header">
     <div class="topbar">
-      <div class="title">{{ title }}</div>
+      <div class="titlewrap">
+        {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="" />{% endif %}
+        <div class="title">{{ title }}</div>
+      </div>
       {% if poll_date %}<div class="updated">{{ poll_date }}</div>{% endif %}
     </div>
     {% if meta %}<div class="meta">{{ meta }}</div>{% endif %}
