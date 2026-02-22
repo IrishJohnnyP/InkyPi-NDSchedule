@@ -27,7 +27,7 @@
   width: calc(min(3.2dvh, 3.2dvw) * var(--scale));
   height: calc(min(3.2dvh, 3.2dvw) * var(--scale));
   object-fit: contain;
-  filter: grayscale(100%) contrast(125%);
+  filter: none;
 }
 
 .title {
@@ -82,7 +82,7 @@
   width: calc(min(2.85dvh, 2.85dvw) * var(--scale));
   height: calc(min(2.85dvh, 2.85dvw) * var(--scale));
   object-fit: contain;
-  filter: grayscale(100%) contrast(125%);
+  filter: none;
 }
 
 .name {
@@ -116,25 +116,10 @@
   text-align: right;
 }
 
-/* Subtle result cues (e-ink friendly) */
+/* Result color cues */
 .result.win { color: #0a7d00; }
 .result.lose { color: #b00020; }
 .result.tie { color: #444444; }
-
-/* Result dot indicator (works even on limited-color displays) */
-.result::before {
-  content: '';
-  display: inline-block;
-  width: 0.75em;
-  height: 0.75em;
-  border-radius: 50%;
-  margin-right: 0.45em;
-  vertical-align: -0.05em;
-  background: rgba(0,0,0,0.25);
-}
-.result.win::before { background: #0a7d00; }
-.result.lose::before { background: #b00020; }
-.result.tie::before { background: #444444; }
 
 .footnote {
   margin-top: 0.9dvh;
