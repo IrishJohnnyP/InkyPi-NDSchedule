@@ -20,10 +20,12 @@ LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/c
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v5:
+    v6:
+      - Season year selectable (last 5 years). Defaults to current season.
+      - Rankings only displayed for the current season (CFP preferred, else AP).
+      - Result shown as W/L from Notre Dame perspective followed by score.
       - Update line below title includes update time + rank source.
-      - Added game location.
-      - Dynamic season year selection.
+      - Includes game location.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -39,7 +41,7 @@ class NdSchedule(BasePlugin):
             font_size = "normal"
 
         compact_mode = self._to_bool(settings.get("compact_mode", False))
-        show_rank = self._to_bool(settings.get("show_rank", True))
+        show_rank_setting = self._to_bool(settings.get("show_rank", True))
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
@@ -48,16 +50,28 @@ class NdSchedule(BasePlugin):
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
 
-        season_year = self._detect_current_season_year(ttl)
-        sched = self._fetch_schedule_for_year(season_year, ttl)
+        current_year = self._detect_current_season_year(ttl)
+        selected = settings.get("season_year")
+        try:
+            season_year = int(str(selected)) if str(selected).strip() else current_year
+        except Exception:
+            season_year = current_year
 
+        sched = self._fetch_schedule_for_year(season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
-        rank_map, rank_label, rank_updated = self._get_rank_map(ttl, device_config)
-        rows = self._build_rows(sched, rank_map, show_rank, device_config)
+        # Only use rankings for the current year
+        effective_show_rank = bool(show_rank_setting and season_year == current_year)
+        rank_map: Dict[str, int] = {}
+        rank_label = ""
+        rank_updated = ""
+        if effective_show_rank:
+            rank_map, rank_label, rank_updated = self._get_rank_map(ttl, device_config)
+
+        rows = self._build_rows(sched, rank_map, effective_show_rank, device_config)
 
         update_line = ""
-        if show_rank and rank_label:
+        if effective_show_rank and rank_label:
             if rank_updated:
                 update_line = f"Updated {rank_updated} • Rank source: {rank_label}"
             else:
@@ -66,6 +80,8 @@ class NdSchedule(BasePlugin):
             sched_updated = self._format_updated(sched, device_config)
             if sched_updated:
                 update_line = f"Updated {sched_updated}"
+            else:
+                update_line = f"Season {season_year}"
 
         template_params = {
             "title": f"Notre Dame Football Schedule for {season_year}",
@@ -113,11 +129,14 @@ class NdSchedule(BasePlugin):
         return year_guess
 
     def _fetch_schedule_for_year(self, year: int, ttl: int) -> Dict[str, Any]:
+        # Try common variants; include postseason for past seasons
         candidates = [
             f"{SCHEDULE_BASE_URL}?season={year}",
             f"{SCHEDULE_BASE_URL}?year={year}",
             f"{SCHEDULE_BASE_URL}?season={year}&seasontype=2",
+            f"{SCHEDULE_BASE_URL}?season={year}&seasontype=3",
             f"{SCHEDULE_BASE_URL}?year={year}&seasontype=2",
+            f"{SCHEDULE_BASE_URL}?year={year}&seasontype=3",
             SCHEDULE_BASE_URL,
         ]
         last = None
@@ -130,13 +149,6 @@ class NdSchedule(BasePlugin):
                     return data
             except Exception:
                 continue
-
-        try:
-            data = self._fetch_json_cached(f"{SCHEDULE_BASE_URL}?season={year+1}", ttl)
-            if isinstance(data.get("events"), list) and data.get("events"):
-                return data
-        except Exception:
-            pass
 
         return last or {"events": []}
 
@@ -290,20 +302,16 @@ class NdSchedule(BasePlugin):
             opp_id = str(opp_team.get("id") or "")
             opp_name = opp_team.get("shortDisplayName") or opp_team.get("displayName") or opp_team.get("name") or "Opponent"
 
-            # logo
             logo = ""
             logos = opp_team.get("logos")
             if isinstance(logos, list) and logos:
-                href = None
                 for item in logos:
                     if isinstance(item, dict) and item.get("href"):
-                        href = item.get("href")
+                        logo = item.get("href")
                         break
-                logo = href or ""
             else:
                 logo = opp_team.get("logo") or ""
 
-            # opponent record
             opp_record = ""
             recs = opp_side.get("records")
             if isinstance(recs, list) and recs:
@@ -311,16 +319,14 @@ class NdSchedule(BasePlugin):
                     if isinstance(r, dict) and r.get("type") in ("total", "overall"):
                         opp_record = r.get("summary") or r.get("displayValue") or ""
                         break
-                if not opp_record:
-                    r0 = recs[0]
-                    if isinstance(r0, dict):
-                        opp_record = r0.get("summary") or r0.get("displayValue") or ""
+                if not opp_record and isinstance(recs[0], dict):
+                    opp_record = recs[0].get("summary") or recs[0].get("displayValue") or ""
             if not opp_record:
                 opp_record = opp_side.get("record") or ""
 
             rk = rank_map.get(opp_id) if show_rank else None
 
-            # result/score
+            # Result as W/L from ND perspective
             result = ""
             status = (comp.get("status") or {}).get("type") if isinstance(comp, dict) else {}
             completed = bool(status.get("completed")) if isinstance(status, dict) else False
@@ -346,7 +352,7 @@ class NdSchedule(BasePlugin):
         return rows
 
     # ----------------------------
-    # Formatting helpers
+    # Formatting
     # ----------------------------
 
     def _format_location(self, comp: Dict[str, Any]) -> str:
