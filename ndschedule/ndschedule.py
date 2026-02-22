@@ -12,24 +12,22 @@ ND_TEAM_ID = 87
 TEAM_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}"
 SCHEDULE_BASE_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}/schedule"
 RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
-
-# Detect current league season year
 LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football?lang=en&region=us"
 
 
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v7:
-      - Increased spacing between kickoff time and opponent logo (CSS).
-      - Fixed occasional bad score/record values appearing as JSON like "[{..." by sanitizing.
+    v8:
+      - Removes opponent record column.
+      - Shows result only if completed as: W 31-24 / L 21-24 (Notre Dame perspective).
+      - Optimizes line spacing and column spacing.
 
-    Other features retained:
+    Still includes:
       - Season year selectable (last 5 years), default current season.
       - Rankings only for current season (CFP preferred, else AP).
-      - Result shown as W/L from Notre Dame perspective followed by score.
-      - Update line below title includes update time + rank source.
-      - Includes game location.
+      - Location column.
+      - Update line below title.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -81,10 +79,7 @@ class NdSchedule(BasePlugin):
                 update_line = f"Rank source: {rank_label}"
         else:
             sched_updated = self._format_updated(sched, device_config)
-            if sched_updated:
-                update_line = f"Updated {sched_updated}"
-            else:
-                update_line = f"Season {season_year}"
+            update_line = f"Updated {sched_updated}" if sched_updated else f"Season {season_year}"
 
         template_params = {
             "title": f"Notre Dame Football Schedule for {season_year}",
@@ -170,25 +165,7 @@ class NdSchedule(BasePlugin):
     # Helpers
     # ----------------------------
 
-    def _safe_record_text(self, v: Any) -> str:
-        """Safely extract a record summary string from possible ESPN shapes."""
-        if v is None:
-            return ""
-        if isinstance(v, str):
-            return v
-        if isinstance(v, (int, float)):
-            return str(v)
-        if isinstance(v, dict):
-            for k in ("summary", "displayValue", "value"):
-                if v.get(k):
-                    return str(v.get(k))
-            return ""
-        if isinstance(v, list) and v:
-            return self._safe_record_text(v[0])
-        return ""
-
     def _safe_int(self, v: Any):
-        """Parse an int from ESPN values; return None if not possible."""
         try:
             if v is None:
                 return None
@@ -352,19 +329,6 @@ class NdSchedule(BasePlugin):
             else:
                 logo = opp_team.get("logo") or ""
 
-            opp_record = ""
-            recs = opp_side.get("records")
-            if isinstance(recs, list) and recs:
-                for r in recs:
-                    if isinstance(r, dict) and r.get("type") in ("total", "overall"):
-                        opp_record = r.get("summary") or r.get("displayValue") or ""
-                        break
-                if not opp_record:
-                    opp_record = self._safe_record_text(recs[0])
-            if not opp_record:
-                opp_record = self._safe_record_text(opp_side.get("record"))
-            opp_record = self._safe_record_text(opp_record)
-
             rk = rank_map.get(opp_id) if show_rank else None
 
             result = ""
@@ -383,7 +347,6 @@ class NdSchedule(BasePlugin):
                 "logo": logo,
                 "opp_name": opp_name,
                 "location": location_disp,
-                "opp_record": opp_record,
                 "result": result,
             })
 
