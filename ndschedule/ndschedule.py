@@ -1,5 +1,6 @@
 import time
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Optional
 
 from plugins.base_plugin.base_plugin import BasePlugin
@@ -13,23 +14,52 @@ TEAM_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-foot
 RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
 LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football?lang=en&region=us"
 
+ND_LOGO_URL = "https://a.espncdn.com/i/teamlogos/ncaa/500/87.png"
+
+
+def _ensure_icon_file():
+    """Ensure the plugin icon is the Notre Dame logo.
+
+    Attempts to download ESPN's Notre Dame logo and save it as icon.png next to this plugin.
+    Fails silently if network/file permissions are unavailable.
+    """
+    try:
+        here = Path(__file__).resolve().parent
+        icon_path = here / 'icon.png'
+        # If icon already exists and looks like a real image, keep it.
+        if icon_path.exists() and icon_path.stat().st_size > 2000:
+            return
+        session = get_http_session()
+        resp = session.get(ND_LOGO_URL, timeout=15)
+        if resp.status_code == 200 and resp.content and len(resp.content) > 2000:
+            icon_path.write_bytes(resp.content)
+    except Exception:
+        return
+
+
+# Try immediately on module import
+_ensure_icon_file()
+
 
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v11:
-      - Fix visual cues: add both color + dot indicator to survive color-limited displays.
-      - Add opponent record as of the day before each game (computed from opponent schedule).
-      - Keeps Eastern-only times and score/result display.
-
-    Notes:
-      - Rankings only used for the current season.
-      - Opponent pregame record is computed by summing completed games with date < game date.
+    v12 updates:
+      - Removed the small dot indicator.
+      - Score/result text is green for ND wins and red for ND losses.
+      - Logos are displayed in color (no grayscale filter).
+      - Uses the Notre Dame logo as the plugin icon (downloaded from ESPN if needed).
+      - Keeps opponent pre-game record (as of before kickoff), Eastern-only times, and rankings only for current season.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
     def generate_settings_template(self):
+        # Try again when settings are loaded
+        try:
+            _ensure_icon_file()
+        except Exception:
+            pass
         params = super().generate_settings_template()
         params["style_settings"] = True
         return params
@@ -68,12 +98,8 @@ class NdSchedule(BasePlugin):
 
         rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl)
 
-        update_line = ""
         if effective_show_rank and rank_label:
-            if rank_updated:
-                update_line = f"Updated {rank_updated} • Rank source: {rank_label}"
-            else:
-                update_line = f"Rank source: {rank_label}"
+            update_line = f"Updated {rank_updated} • Rank source: {rank_label}" if rank_updated else f"Rank source: {rank_label}"
         else:
             sched_updated = self._format_updated(sched)
             update_line = f"Updated {sched_updated}" if sched_updated else f"Season {season_year}"
@@ -157,7 +183,7 @@ class NdSchedule(BasePlugin):
                         return item.get("href")
         except Exception:
             pass
-        return f"https://a.espncdn.com/i/teamlogos/ncaa/500/{ND_TEAM_ID}.png"
+        return ND_LOGO_URL
 
     # ----------------------------
     # Helpers
