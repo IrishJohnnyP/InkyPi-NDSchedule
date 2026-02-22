@@ -1,6 +1,6 @@
 {
   "display_name": "Notre Dame Schedule",
   "id": "ndschedule",
-  "class": "NdSchedule"
+  "class": "NdSchedule",
   "repository": "https://github.com/IrishJohnnyP/InkyPi-NDSchedule"
 }
