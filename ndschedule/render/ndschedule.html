@@ -1,31 +1,29 @@
-{% extends "plugin.html" %}
 
+{% extends "plugin.html" %}
 {% block content %}
 <div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %}">
   <div class="header">
     <div class="titlewrap">
-      {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="" />{% endif %}
+      {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="Notre Dame logo"/>{% endif %}
       <div class="title">{{ title }}</div>
     </div>
     {% if update_line %}<div class="update-line">{{ update_line }}</div>{% endif %}
   </div>
 
-  <div class="list">
-    {% for g in rows %}
-      <div class="row">
-        <div class="date">{{ g.date }}</div>
-        <div class="opp">
-          {% if g.opp_rank %}<span class="rank">#{{ g.opp_rank }}</span>{% endif %}
-          {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="" />{% endif %}
-          <span class="school">{{ g.opp_school }}</span>
-          {% if g.opp_nickname %}<span class="nickname">({{ g.opp_nickname }})</span>{% endif %}
-          {% if g.opp_record %}<span class="opp-rec">({{ g.opp_record }})</span>{% endif %}
-        </div>
-        <div class="site">{{ g.site }}</div>
-        <div class="result {{ g.result_class }}">{{ g.result }}</div>
-      </div>
-    {% endfor %}
+  {% for g in rows %}
+  <div class="row">
+    <div class="date">{{ g.date }}</div>
+    <div class="opp">
+      <div class="rank">{% if g.opp_rank %}#{{ g.opp_rank }}{% endif %}</div>
+      {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="{{ g.opp_school }} logo"/>{% endif %}
+      <div class="school">{{ g.opp_school }}</div>
+      {% if g.opp_nickname %}<div class="nickname">({{ g.opp_nickname }})</div>{% endif %}
+      {% if g.opp_record %}<div class="opp-rec">({{ g.opp_record }})</div>{% endif %}
+    </div>
+    <div class="site">{{ g.site }}</div>
+    <div class="result {{ g.result_class }}">{{ g.result }}</div>
   </div>
+  {% endfor %}
 
   <div class="footnote">* All times Eastern</div>
 </div>
