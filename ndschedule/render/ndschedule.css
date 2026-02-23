@@ -1,3 +1,7 @@
+/* Patch v5.6.1
+   - Widen DATE/TIME column to reduce truncation (especially at Largest)
+   - Nudge RECORD header slightly left for better visual alignment
+*/
 
 :root{
   --black: rgb(0,0,0);
@@ -6,7 +10,7 @@
   --lose-red: rgb(255,0,0);
 
   /* Default column widths */
-  --col-date: 18ch;
+  --col-date: 19ch;   /* was 18ch */
   --col-rec: 7ch;
   --col-site: 7ch;
   --col-result: 10ch;
@@ -14,11 +18,11 @@
 
 .nd-container{width:100%;height:100%;box-sizing:border-box;padding:2.7dvh 2.8dvw;font-family:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-weight:600;--scale:1.0;--title-scale:1.0;background:var(--white);color:var(--black);}
 
-.font-normal { --scale:1.00; --title-scale:1.00; }
-.font-large  { --scale:1.12; --title-scale:1.06; --col-date:19ch; --col-rec:7ch; --col-site:7ch; --col-result:10ch; }
-.font-larger { --scale:1.25; --title-scale:1.12; --col-date:20ch; --col-rec:7.5ch; --col-site:7ch; --col-result:10ch; }
-/* For largest: widen DATE/RECORD/SITE/RESULT to prevent truncation; opponent column gets the remaining space */
-.font-largest{ --scale:1.40; --title-scale:1.18; --col-date:22ch; --col-rec:8.5ch; --col-site:8ch; --col-result:11ch; }
+.font-normal { --scale:1.00; --title-scale:1.00; --col-date:19ch; }
+.font-large  { --scale:1.12; --title-scale:1.06; --col-date:20ch; --col-rec:7ch;   --col-site:7ch; --col-result:10ch; }
+.font-larger { --scale:1.25; --title-scale:1.12; --col-date:22ch; --col-rec:7.5ch; --col-site:7ch; --col-result:10ch; }
+/* Largest: widen DATE/TIME further to prevent truncation */
+.font-largest{ --scale:1.40; --title-scale:1.18; --col-date:25ch; --col-rec:8.5ch; --col-site:8ch; --col-result:11ch; }
 
 .header{margin-bottom:0.9dvh;}
 .titlewrap{display:flex;align-items:center;gap:1.0dvw;min-width:0;}
@@ -30,20 +34,25 @@
 .colhdr{padding:0.35dvh 0 0.30dvh 0;}
 .colhdr .h{font-size:calc(min(1.45dvh,1.45dvw)*var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 
+/* Nudge the RECORD header slightly left (3rd column header) */
+.colhdr .h:nth-child(3){
+  text-align:left;
+  padding-left:0.35ch;
+}
+
 .sep{height:1px;background:var(--black);width:100%;}
 .row{padding:0.40dvh 0;}
 
-/* Default cell styles */
 .date{font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;}
 .rec{font-size:calc(min(1.80dvh,1.80dvw)*var(--scale));font-weight:650;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .site{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .result{font-size:calc(min(1.80dvh,1.80dvw)*var(--scale));font-weight:950;white-space:nowrap;text-align:right;color:var(--black);overflow:hidden;text-overflow:clip;}
 
-/* On largest, slightly reduce font-size for the non-opponent columns to avoid truncation while keeping overall scale */
+/* Keep the non-opponent columns from clipping at Largest by slightly reducing their font size */
 .font-largest .date,
 .font-largest .rec,
 .font-largest .site,
-.font-largest .result{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));}
+.font-largest .result{font-size:calc(min(1.70dvh,1.70dvw)*var(--scale));}
 
 .result.win{color:var(--win-green);} 
 .result.lose{color:var(--lose-red);} 
