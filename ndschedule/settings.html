@@ -14,6 +14,10 @@
 </div>
 <input type="hidden" id="compact_mode" name="compact_mode" value="false" />
 <input type="hidden" id="show_rank" name="show_rank" value="true" />
+<input type="hidden" id="hide_rank" name="hide_rank" value="false" />
+<input type="hidden" id="hide_nickname" name="hide_nickname" value="false" />
+<input type="hidden" id="hide_logo" name="hide_logo" value="false" />
+
 <div class="form-check mt-3">
   <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
   <label class="form-check-label" for="compact_mode_checkbox">Compact mode</label>
@@ -23,6 +27,19 @@
   <label class="form-check-label" for="show_rank_checkbox">Show opponent rank (Top 25; CFP preferred, else AP)</label>
   <small class="form-text text-muted d-block">Rankings are only displayed for the current season.</small>
 </div>
+<div class="form-check mt-2">
+  <input class="form-check-input" type="checkbox" id="hide_rank_checkbox">
+  <label class="form-check-label" for="hide_rank_checkbox">Hide rank in list</label>
+</div>
+<div class="form-check mt-2">
+  <input class="form-check-input" type="checkbox" id="hide_nickname_checkbox">
+  <label class="form-check-label" for="hide_nickname_checkbox">Hide nickname in list</label>
+</div>
+<div class="form-check mt-2">
+  <input class="form-check-input" type="checkbox" id="hide_logo_checkbox">
+  <label class="form-check-label" for="hide_logo_checkbox">Hide opponent logo</label>
+</div>
+
 <div class="form-group mt-3">
   <label for="cache_minutes" class="form-label">Cache (minutes)</label>
   <input class="form-control" type="number" id="cache_minutes" name="cache_minutes" min="0" max="1440" value="30">
@@ -69,11 +86,20 @@
 
     document.getElementById('compact_mode_checkbox').checked = toBool(ps.compact_mode, false);
     document.getElementById('show_rank_checkbox').checked = toBool(ps.show_rank, true);
+    document.getElementById('hide_rank_checkbox').checked = toBool(ps.hide_rank, false);
+    document.getElementById('hide_nickname_checkbox').checked = toBool(ps.hide_nickname, false);
+    document.getElementById('hide_logo_checkbox').checked = toBool(ps.hide_logo, false);
 
     syncHiddenBool('compact_mode', 'compact_mode_checkbox');
     syncHiddenBool('show_rank', 'show_rank_checkbox');
+    syncHiddenBool('hide_rank', 'hide_rank_checkbox');
+    syncHiddenBool('hide_nickname', 'hide_nickname_checkbox');
+    syncHiddenBool('hide_logo', 'hide_logo_checkbox');
 
     document.getElementById('compact_mode_checkbox').addEventListener('change', () => syncHiddenBool('compact_mode', 'compact_mode_checkbox'));
     document.getElementById('show_rank_checkbox').addEventListener('change', () => syncHiddenBool('show_rank', 'show_rank_checkbox'));
+    document.getElementById('hide_rank_checkbox').addEventListener('change', () => syncHiddenBool('hide_rank', 'hide_rank_checkbox'));
+    document.getElementById('hide_nickname_checkbox').addEventListener('change', () => syncHiddenBool('hide_nickname', 'hide_nickname_checkbox'));
+    document.getElementById('hide_logo_checkbox').addEventListener('change', () => syncHiddenBool('hide_logo', 'hide_logo_checkbox'));
   });
 </script>
