@@ -18,15 +18,10 @@ ND_LOGO_URL = "https://a.espncdn.com/i/teamlogos/ncaa/500/87.png"
 
 
 def _ensure_icon_file():
-    """Ensure the plugin icon is the Notre Dame logo.
-
-    Attempts to download ESPN's Notre Dame logo and save it as icon.png next to this plugin.
-    Fails silently if network/file permissions are unavailable.
-    """
+    """Ensure the plugin icon is the Notre Dame logo."""
     try:
         here = Path(__file__).resolve().parent
         icon_path = here / 'icon.png'
-        # If icon already exists and looks like a real image, keep it.
         if icon_path.exists() and icon_path.stat().st_size > 2000:
             return
         session = get_http_session()
@@ -37,25 +32,21 @@ def _ensure_icon_file():
         return
 
 
-# Try immediately on module import
 _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v12 updates:
-      - Removed the small dot indicator.
-      - Score/result text is green for ND wins and red for ND losses.
-      - Logos are displayed in color (no grayscale filter).
-      - Uses the Notre Dame logo as the plugin icon (downloaded from ESPN if needed).
-      - Keeps opponent pre-game record (as of before kickoff), Eastern-only times, and rankings only for current season.
+    v13 updates:
+      - Replace location with Home/Away indicator.
+      - Add optional display of opponent nickname in smaller/lighter font.
+      - Keeps opponent pre-game record, Eastern-only times, color logos, and win/lose score colors.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
     def generate_settings_template(self):
-        # Try again when settings are loaded
         try:
             _ensure_icon_file()
         except Exception:
@@ -71,6 +62,7 @@ class NdSchedule(BasePlugin):
 
         compact_mode = self._to_bool(settings.get("compact_mode", False))
         show_rank_setting = self._to_bool(settings.get("show_rank", True))
+        show_nickname = self._to_bool(settings.get("show_nickname", False))
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
@@ -109,6 +101,7 @@ class NdSchedule(BasePlugin):
             "nd_logo": nd_logo,
             "update_line": update_line,
             "rows": rows,
+            "show_nickname": show_nickname,
             "font_size": font_size,
             "compact_mode": compact_mode,
             "plugin_settings": settings,
@@ -250,7 +243,6 @@ class NdSchedule(BasePlugin):
     def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
         if not opp_team_id or not game_dt_utc:
             return ""
-
         opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
         events = opp_sched.get("events") or []
         if not isinstance(events, list) or not events:
@@ -265,12 +257,7 @@ class NdSchedule(BasePlugin):
                 continue
 
             comps = ev.get("competitions")
-            if isinstance(comps, list) and comps:
-                comp = comps[0]
-            elif isinstance(ev.get("competitions"), dict):
-                comp = ev.get("competitions")
-            else:
-                comp = ev
+            comp = comps[0] if isinstance(comps, list) and comps else (ev.get("competitions") if isinstance(ev.get("competitions"), dict) else ev)
             if not isinstance(comp, dict):
                 continue
 
@@ -278,8 +265,7 @@ class NdSchedule(BasePlugin):
             if not isinstance(competitors, list) or len(competitors) < 2:
                 continue
 
-            my_side = None
-            other_side = None
+            my_side = other_side = None
             for c in competitors:
                 if not isinstance(c, dict):
                     continue
@@ -420,22 +406,15 @@ class NdSchedule(BasePlugin):
             game_dt = self._parse_iso(iso_date)
 
             comps = ev.get("competitions")
-            if isinstance(comps, list) and comps:
-                comp = comps[0]
-            elif isinstance(ev.get("competitions"), dict):
-                comp = ev.get("competitions")
-            else:
-                comp = ev
+            comp = comps[0] if isinstance(comps, list) and comps else (ev.get("competitions") if isinstance(ev.get("competitions"), dict) else ev)
 
             date_disp = self._format_game_datetime(iso_date, comp)
-            location_disp = self._format_location(comp)
 
             competitors = (comp.get("competitors") or []) if isinstance(comp, dict) else []
             if not isinstance(competitors, list):
                 competitors = []
 
-            nd_side = None
-            opp_side = None
+            nd_side = opp_side = None
             for c in competitors:
                 if not isinstance(c, dict):
                     continue
@@ -445,12 +424,18 @@ class NdSchedule(BasePlugin):
                 else:
                     opp_side = c
 
-            if not opp_side:
+            if not opp_side or not nd_side:
                 continue
 
             opp_team = opp_side.get("team") or {}
             opp_id = str(opp_team.get("id") or "")
-            opp_name = opp_team.get("shortDisplayName") or opp_team.get("displayName") or opp_team.get("name") or "Opponent"
+
+            # Main name and nickname
+            opp_school = opp_team.get("location") or opp_team.get("shortDisplayName") or opp_team.get("displayName") or opp_team.get("name") or "Opponent"
+            opp_nickname = opp_team.get("name") or ""
+            # avoid repeating if nickname already in school string
+            if opp_nickname and opp_nickname.lower() in str(opp_school).lower():
+                opp_nickname = ""
 
             logo = ""
             logos = opp_team.get("logos")
@@ -464,6 +449,7 @@ class NdSchedule(BasePlugin):
 
             rk = rank_map.get(opp_id) if show_rank else None
 
+            # opponent record as of before kickoff
             opp_record = ""
             if game_dt is not None and opp_id:
                 try:
@@ -471,17 +457,26 @@ class NdSchedule(BasePlugin):
                 except Exception:
                     opp_record = ""
 
-            nd_score = self._safe_int(nd_side.get("score")) if nd_side else None
+            # Home/Away indicator based on ND side
+            ha = str(nd_side.get('homeAway') or '').lower()
+            neutral = False
+            try:
+                neutral = bool(comp.get('neutralSite'))
+            except Exception:
+                neutral = False
+            if neutral:
+                site = 'N'
+            elif ha == 'home':
+                site = 'H'
+            elif ha == 'away':
+                site = 'A'
+            else:
+                site = ''
+
+            nd_score = self._safe_int(nd_side.get("score"))
             opp_score = self._safe_int(opp_side.get("score"))
 
-            has_winner_flag = False
-            try:
-                if nd_side and isinstance(nd_side.get('winner'), bool):
-                    has_winner_flag = True
-                if isinstance(opp_side.get('winner'), bool):
-                    has_winner_flag = True
-            except Exception:
-                pass
+            has_winner_flag = isinstance(nd_side.get('winner'), bool) or isinstance(opp_side.get('winner'), bool)
 
             result = ""
             result_class = ""
@@ -498,11 +493,12 @@ class NdSchedule(BasePlugin):
 
             rows.append({
                 "date": date_disp,
+                "site": site,
                 "opp_rank": rk,
                 "logo": logo,
-                "opp_name": opp_name,
+                "opp_school": opp_school,
+                "opp_nickname": opp_nickname,
                 "opp_record": opp_record,
-                "location": location_disp,
                 "result": result,
                 "result_class": result_class,
             })
@@ -512,17 +508,6 @@ class NdSchedule(BasePlugin):
     # ----------------------------
     # Formatting (All times Eastern)
     # ----------------------------
-
-    def _format_location(self, comp: Dict[str, Any]) -> str:
-        if not isinstance(comp, dict):
-            return ""
-        venue = comp.get("venue")
-        if not isinstance(venue, dict):
-            return ""
-        address = venue.get("address")
-        if isinstance(address, dict) and address.get("city") and address.get("state"):
-            return f"{address.get('city')}, {address.get('state')}"
-        return venue.get("fullName") or venue.get("name") or ""
 
     def _format_iso_datetime(self, iso_str: str) -> str:
         from datetime import datetime, timezone
