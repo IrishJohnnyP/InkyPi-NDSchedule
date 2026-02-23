@@ -52,7 +52,7 @@
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  column-gap: 2.0dvw;
+  column-gap: 1.8dvw;
   padding: 0.48dvh 0;
   border-bottom: 1px solid rgba(0,0,0,0.12);
 }
@@ -67,8 +67,8 @@
 
 .opp {
   display: flex;
-  align-items: center;
-  gap: 0.85dvw;
+  align-items: baseline;
+  gap: 0.75dvw;
   min-width: 0;
 }
 
@@ -85,7 +85,7 @@
   filter: none;
 }
 
-.name {
+.school {
   font-size: calc(min(2.05dvh, 2.05dvw) * var(--scale));
   font-weight: 750;
   overflow: hidden;
@@ -93,19 +93,26 @@
   white-space: nowrap;
 }
 
+.nickname {
+  font-size: calc(min(1.65dvh, 1.65dvw) * var(--scale));
+  font-weight: 400;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
 .opp-rec {
-  font-size: calc(min(1.7dvh, 1.7dvw) * var(--scale));
+  font-size: calc(min(1.65dvh, 1.65dvw) * var(--scale));
+  font-weight: 500;
   opacity: 0.8;
   white-space: nowrap;
 }
 
-.location {
-  font-size: calc(min(1.75dvh, 1.75dvw) * var(--scale));
+.site {
+  font-size: calc(min(1.85dvh, 1.85dvw) * var(--scale));
+  font-weight: 800;
+  width: 2.5ch;
+  text-align: center;
   opacity: 0.9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 16ch;
 }
 
 .result {
@@ -127,21 +134,9 @@
   opacity: 0.75;
 }
 
-.compact {
-  padding: 2.0dvh 2.2dvw;
-}
-
-.compact .row {
-  padding: 0.28dvh 0;
-  column-gap: 1.4dvw;
-}
-
-.compact .location { width: 14ch; }
-
-.compact .logo {
-  width: calc(min(2.55dvh, 2.55dvw) * var(--scale));
-  height: calc(min(2.55dvh, 2.55dvw) * var(--scale));
-}
+.compact { padding: 2.0dvh 2.2dvw; }
+.compact .row { padding: 0.28dvh 0; column-gap: 1.2dvw; }
+.compact .site { width: 2.2ch; }
 
 @media (max-aspect-ratio: 1) {
   .nd-container { padding: 4dvh 4dvw; }
