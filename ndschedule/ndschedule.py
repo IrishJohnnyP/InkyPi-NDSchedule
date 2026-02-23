@@ -37,15 +37,11 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v18 (nickname, v22-style):
-      - Uses cfbrankings v22 nickname logic: nickname = team.name OR team.nickname; display only if not already in school.
-      - Nickname is displayed in parentheses and always on (no setting).
-      - Site column spells out Home/Away/Neutral.
-      - Shows opponent record as of before kickoff.
-      - Score shown as W/L from ND perspective; green for wins, red for losses.
-      - Logos are displayed in color.
-      - Rankings only shown for current season.
-      - All times displayed in Eastern; footnote included.
+    v19:
+      - Adds '@' between date and kickoff time (e.g., 'Sep 01 @ 7:30 PM').
+      - Displays nickname after team name (no parentheses).
+      - Nickname logic follows cfbrankings v22: nickname = team.name OR team.nickname; show only if not contained in school.
+      - No nickname toggle (always shown when available).
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -260,7 +256,6 @@ class NdSchedule(BasePlugin):
         return 'Unknown'
 
     def _choose_nickname_v22(self, team: Dict[str, Any], school: str) -> str:
-        """Match cfbrankings v22: nickname = team.name OR team.nickname; only show if not already in school."""
         nickname = (team.get('name') or team.get('nickname') or '').strip()
         if nickname and nickname.lower() not in str(school).lower():
             return nickname
@@ -317,10 +312,6 @@ class NdSchedule(BasePlugin):
                 else:
                     ties += 1
         return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
-
-    # ----------------------------
-    # Rankings (Top 25) — for opponent rank
-    # ----------------------------
 
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
@@ -404,32 +395,22 @@ class NdSchedule(BasePlugin):
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
 
-    # ----------------------------
-    # Rows
-    # ----------------------------
-
     def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int) -> List[Dict[str, Any]]:
         events = sched.get('events') or []
         if not isinstance(events, list):
             events = []
-
         rows: List[Dict[str, Any]] = []
         for ev in events:
             if not isinstance(ev, dict):
                 continue
-
             iso_date = str(ev.get('date') or '')
             game_dt = self._parse_iso(iso_date)
-
             comps = ev.get('competitions')
             comp = comps[0] if isinstance(comps, list) and comps else ev
-
             date_disp = self._format_game_datetime(iso_date, comp)
-
             competitors = (comp.get('competitors') or []) if isinstance(comp, dict) else []
             if not isinstance(competitors, list):
                 competitors = []
-
             nd_side = opp_side = None
             for c in competitors:
                 if not isinstance(c, dict):
@@ -439,20 +420,13 @@ class NdSchedule(BasePlugin):
                     nd_side = c
                 else:
                     opp_side = c
-
             if not nd_side or not opp_side:
                 continue
-
             opp_team = opp_side.get('team') or {}
             opp_id = str(opp_team.get('id') or '')
             opp_meta = self._get_team_meta(int(opp_id), ttl) if opp_id.isdigit() else {}
-
             school = self._choose_school(opp_team, opp_meta)
-
-            # Apply v22 nickname logic on the richer payload when possible
             nickname = self._choose_nickname_v22(opp_meta if opp_meta else opp_team, school)
-
-            # logo
             logo = ''
             logos = opp_team.get('logos')
             if isinstance(logos, list):
@@ -462,48 +436,25 @@ class NdSchedule(BasePlugin):
                         break
             if not logo:
                 logo = str(opp_team.get('logo') or '')
-
             rk = rank_map.get(opp_id) if show_rank else None
             opp_record = self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl) if (opp_id.isdigit() and game_dt) else ''
-
             ha = str(nd_side.get('homeAway') or '').lower()
             neutral = bool(comp.get('neutralSite')) if isinstance(comp, dict) else False
             site = 'Neutral' if neutral else ('Home' if ha == 'home' else ('Away' if ha == 'away' else ''))
-
             nd_score = self._safe_int(nd_side.get('score'))
             opp_score = self._safe_int(opp_side.get('score'))
             has_winner_flag = isinstance(nd_side.get('winner'), bool) or isinstance(opp_side.get('winner'), bool)
-
             result = ''
             result_class = ''
             if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
                 if nd_score > opp_score:
-                    result = f"W {nd_score}-{opp_score}"
-                    result_class = 'win'
+                    result = f"W {nd_score}-{opp_score}"; result_class = 'win'
                 elif nd_score < opp_score:
-                    result = f"L {nd_score}-{opp_score}"
-                    result_class = 'lose'
+                    result = f"L {nd_score}-{opp_score}"; result_class = 'lose'
                 else:
-                    result = f"T {nd_score}-{opp_score}"
-                    result_class = 'tie'
-
-            rows.append({
-                'date': date_disp,
-                'site': site,
-                'opp_rank': rk,
-                'logo': logo,
-                'opp_school': school,
-                'opp_nickname': nickname,
-                'opp_record': opp_record,
-                'result': result,
-                'result_class': result_class,
-            })
-
+                    result = f"T {nd_score}-{opp_score}"; result_class = 'tie'
+            rows.append({'date':date_disp,'site':site,'opp_rank':rk,'logo':logo,'opp_school':school,'opp_nickname':nickname,'opp_record':opp_record,'result':result,'result_class':result_class})
         return rows
-
-    # ----------------------------
-    # Formatting (All times Eastern)
-    # ----------------------------
 
     def _format_game_datetime(self, iso_str: str, comp: Dict[str, Any]) -> str:
         from datetime import datetime, timezone
@@ -519,7 +470,7 @@ class NdSchedule(BasePlugin):
             hour = dt_local.strftime('%I').lstrip('0') or '12'
             minute = dt_local.strftime('%M')
             ampm = dt_local.strftime('%p')
-            return f"{date_part} {hour}:{minute} {ampm}"
+            return f"{date_part} @ {hour}:{minute} {ampm}"
         except Exception:
             return iso_str[:10]
 
