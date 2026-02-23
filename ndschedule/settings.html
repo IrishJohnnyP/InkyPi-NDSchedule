@@ -1,15 +1,5 @@
 
 <div class="settings-group">
-  <label for="target_display"><b>Target display</b></label>
-  <select id="target_display" name="target_display">
-    <option value="auto" {% if plugin_settings.target_display|default('auto') == 'auto' %}selected{% endif %}>Auto (use configured device resolution)</option>
-    <option value="pimoroni_73" {% if plugin_settings.target_display == 'pimoroni_73' %}selected{% endif %}>Pimoroni Inky Impression 7.3" (800×480)</option>
-    <option value="pimoroni_133" {% if plugin_settings.target_display == 'pimoroni_133' %}selected{% endif %}>Pimoroni Inky Impression 13.3" (1600×1200)</option>
-  </select>
-  <div class="help">If set, this overrides the render size. Useful for previewing layouts when switching between 7.3" and 13.3" panels.</div>
-</div>
-
-<div class="settings-group">
   <label><b>Season year</b></label>
   <div class="help">Defaults to current season if not selected. Shows the last 5 seasons.</div>
 </div>
