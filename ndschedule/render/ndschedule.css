@@ -4,18 +4,21 @@
   --white: rgb(255,255,255);
   --win-green: rgb(0,255,0);
   --lose-red: rgb(255,0,0);
+
+  /* Default column widths */
   --col-date: 18ch;
   --col-rec: 7ch;
-  --col-site: 6ch;
-  --col-result: 9ch;
+  --col-site: 7ch;
+  --col-result: 10ch;
 }
 
 .nd-container{width:100%;height:100%;box-sizing:border-box;padding:2.7dvh 2.8dvw;font-family:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-weight:600;--scale:1.0;--title-scale:1.0;background:var(--white);color:var(--black);}
 
 .font-normal { --scale:1.00; --title-scale:1.00; }
-.font-large  { --scale:1.12; --title-scale:1.06; --col-date:19ch; --col-rec:7ch; }
-.font-larger { --scale:1.25; --title-scale:1.12; --col-date:20ch; --col-rec:7ch; --col-site:6ch; --col-result:9ch; }
-.font-largest{ --scale:1.40; --title-scale:1.18; --col-date:21ch; --col-rec:8ch; --col-site:6ch; --col-result:9ch; }
+.font-large  { --scale:1.12; --title-scale:1.06; --col-date:19ch; --col-rec:7ch; --col-site:7ch; --col-result:10ch; }
+.font-larger { --scale:1.25; --title-scale:1.12; --col-date:20ch; --col-rec:7.5ch; --col-site:7ch; --col-result:10ch; }
+/* For largest: widen DATE/RECORD/SITE/RESULT to prevent truncation; opponent column gets the remaining space */
+.font-largest{ --scale:1.40; --title-scale:1.18; --col-date:22ch; --col-rec:8.5ch; --col-site:8ch; --col-result:11ch; }
 
 .header{margin-bottom:0.9dvh;}
 .titlewrap{display:flex;align-items:center;gap:1.0dvw;min-width:0;}
@@ -23,14 +26,28 @@
 .title{font-size:calc(min(3.8dvh,3.8dvw)*var(--title-scale));font-weight:900;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{margin-top:0.35dvh;font-size:calc(min(1.65dvh,1.65dvw)*var(--scale));font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-.colhdr, .row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);column-gap: 1.2dvw;align-items:center;}
+.colhdr, .row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);column-gap: 1.0dvw;align-items:center;}
 .colhdr{padding:0.35dvh 0 0.30dvh 0;}
-.colhdr .h{font-size:calc(min(1.50dvh,1.50dvw)*var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
+.colhdr .h{font-size:calc(min(1.45dvh,1.45dvw)*var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 
 .sep{height:1px;background:var(--black);width:100%;}
-.row{padding:0.42dvh 0;}
+.row{padding:0.40dvh 0;}
 
+/* Default cell styles */
 .date{font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;}
+.rec{font-size:calc(min(1.80dvh,1.80dvw)*var(--scale));font-weight:650;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.site{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.result{font-size:calc(min(1.80dvh,1.80dvw)*var(--scale));font-weight:950;white-space:nowrap;text-align:right;color:var(--black);overflow:hidden;text-overflow:clip;}
+
+/* On largest, slightly reduce font-size for the non-opponent columns to avoid truncation while keeping overall scale */
+.font-largest .date,
+.font-largest .rec,
+.font-largest .site,
+.font-largest .result{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));}
+
+.result.win{color:var(--win-green);} 
+.result.lose{color:var(--lose-red);} 
+.result.tie{color:var(--black);} 
 
 .opp{display:flex;align-items:center;gap:0.65dvw;min-width:0;overflow:hidden;}
 .rank{font-weight:900;font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));width:3.5ch;flex:0 0 auto;}
@@ -38,18 +55,10 @@
 .school{font-size:calc(min(2.00dvh,2.00dvw)*var(--scale));font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
 .nickname{font-size:calc(min(1.90dvh,1.90dvw)*var(--scale));font-weight:650;margin-left:0.30em;white-space:nowrap;flex:0 0 auto;}
 
-.rec{font-size:calc(min(1.80dvh,1.80dvw)*var(--scale));font-weight:650;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.site{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-.result{font-size:calc(min(1.80dvh,1.80dvw)*var(--scale));font-weight:950;white-space:nowrap;text-align:right;color:var(--black);overflow:hidden;text-overflow:ellipsis;}
-.result.win{color:var(--win-green);} 
-.result.lose{color:var(--lose-red);} 
-.result.tie{color:var(--black);} 
-
 .footnote{margin-top:0.8dvh;font-size:calc(min(1.50dvh,1.50dvw)*var(--scale));font-weight:650;}
 
 .compact{padding:2.0dvh 2.2dvw;}
-.compact .row{padding:0.25dvh 0;column-gap:1.0dvw;}
-.compact .colhdr{column-gap:1.0dvw;}
+.compact .row{padding:0.25dvh 0;column-gap:0.8dvw;}
+.compact .colhdr{column-gap:0.8dvw;}
 
 @media (max-aspect-ratio:1){.nd-container{padding:4dvh 4dvw;}.compact{padding:3dvh 3.5dvw;}}
