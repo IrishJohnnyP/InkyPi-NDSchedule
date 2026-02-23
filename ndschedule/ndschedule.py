@@ -37,11 +37,9 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v19:
-      - Adds '@' between date and kickoff time (e.g., 'Sep 01 @ 7:30 PM').
-      - Displays nickname after team name (no parentheses).
-      - Nickname logic follows cfbrankings v22: nickname = team.name OR team.nickname; show only if not contained in school.
-      - No nickname toggle (always shown when available).
+    v20:
+      - Nickname formatting matches cfbrankings v22: shown in parentheses immediately after the school name.
+      - Kickoff format includes '@' between date and time.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -97,7 +95,7 @@ class NdSchedule(BasePlugin):
             "update_line": update_line,
             "rows": rows,
             "font_size": font_size,
-            "compact_mode": compact_mode,
+            "compact_mode": bool(compact_mode),
             "plugin_settings": settings,
         }
 
@@ -238,64 +236,64 @@ class NdSchedule(BasePlugin):
         except Exception:
             return None
 
-    def _choose_school(self, opp_team: Dict[str, Any], opp_meta: Dict[str, Any]) -> str:
+    def _choose_school(self, team: Dict[str, Any], meta: Dict[str, Any]) -> str:
         for c in (
-            opp_team.get('shortDisplayName'),
-            opp_team.get('location'),
-            opp_team.get('displayName'),
-            opp_team.get('abbreviation'),
-            opp_meta.get('shortDisplayName'),
-            opp_meta.get('location'),
-            opp_meta.get('displayName'),
-            opp_meta.get('abbreviation'),
-            opp_team.get('name'),
-            opp_meta.get('name'),
+            team.get("shortDisplayName"),
+            team.get("location"),
+            team.get("displayName"),
+            team.get("abbreviation"),
+            meta.get("shortDisplayName"),
+            meta.get("location"),
+            meta.get("displayName"),
+            meta.get("abbreviation"),
+            team.get("name"),
+            meta.get("name"),
         ):
             if isinstance(c, str) and c.strip():
                 return c.strip()
-        return 'Unknown'
+        return "Unknown"
 
-    def _choose_nickname_v22(self, team: Dict[str, Any], school: str) -> str:
-        nickname = (team.get('name') or team.get('nickname') or '').strip()
+    def _nickname_v22(self, team: Dict[str, Any], school: str) -> str:
+        nickname = (team.get("name") or team.get("nickname") or "").strip()
         if nickname and nickname.lower() not in str(school).lower():
             return nickname
-        return ''
+        return ""
 
     def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
         if not opp_team_id or not game_dt_utc:
-            return ''
+            return ""
         opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
-        events = opp_sched.get('events') or []
+        events = opp_sched.get("events") or []
         if not isinstance(events, list):
-            return ''
+            return ""
         wins = losses = ties = 0
         for ev in events:
             if not isinstance(ev, dict):
                 continue
-            ev_dt = self._parse_iso(str(ev.get('date') or ''))
+            ev_dt = self._parse_iso(str(ev.get("date") or ""))
             if not ev_dt or ev_dt >= game_dt_utc:
                 continue
-            comps = ev.get('competitions')
+            comps = ev.get("competitions")
             comp = comps[0] if isinstance(comps, list) and comps else ev
             if not isinstance(comp, dict):
                 continue
-            competitors = comp.get('competitors') or []
+            competitors = comp.get("competitors") or []
             if not isinstance(competitors, list) or len(competitors) < 2:
                 continue
             my_side = other_side = None
             for c in competitors:
                 if not isinstance(c, dict):
                     continue
-                t = c.get('team') or {}
-                if str(t.get('id')) == str(opp_team_id):
+                team = c.get("team") or {}
+                if str(team.get("id")) == str(opp_team_id):
                     my_side = c
                 else:
                     other_side = c
             if not my_side or not other_side:
                 continue
-            my_score = self._safe_int(my_side.get('score'))
-            other_score = self._safe_int(other_side.get('score'))
-            winner_flag = my_side.get('winner')
+            my_score = self._safe_int(my_side.get("score"))
+            other_score = self._safe_int(other_side.get("score"))
+            winner_flag = my_side.get("winner")
             if my_score is None or other_score is None:
                 if isinstance(winner_flag, bool):
                     wins += 1 if winner_flag else 0
@@ -313,22 +311,26 @@ class NdSchedule(BasePlugin):
                     ties += 1
         return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
 
+    # ----------------------------
+    # Rankings
+    # ----------------------------
+
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
-        polls = data.get('rankings')
+        polls = data.get("rankings")
         if isinstance(polls, dict):
-            polls = polls.get('items') or polls.get('rankings')
+            polls = polls.get("items") or polls.get("rankings")
         if not isinstance(polls, list):
-            return {}, '', ''
+            return {}, "", ""
 
         def norm(x: Any) -> str:
-            return str(x or '').strip().lower()
+            return str(x or "").strip().lower()
 
         def poll_iso(p: Dict[str, Any]) -> str:
-            for k in ('date','lastUpdated','lastUpdate','updated','updateDate'):
+            for k in ("date", "lastUpdated", "lastUpdate", "updated", "updateDate"):
                 if p.get(k):
                     return str(p.get(k))
-            return ''
+            return ""
 
         def poll_epoch(p: Dict[str, Any]) -> float:
             import datetime
@@ -336,7 +338,7 @@ class NdSchedule(BasePlugin):
             if not iso:
                 return 0.0
             try:
-                dt = datetime.datetime.fromisoformat(iso.replace('Z','+00:00'))
+                dt = datetime.datetime.fromisoformat(iso.replace("Z", "+00:00"))
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=datetime.timezone.utc)
                 return dt.timestamp()
@@ -344,22 +346,16 @@ class NdSchedule(BasePlugin):
                 return 0.0
 
         def is_cfp(p: Dict[str, Any]) -> bool:
-            n = norm(p.get('name'))
-            if 'playoff selection committee' in n:
-                return True
-            s = norm(p.get('shortName'))
-            t = norm(p.get('type'))
-            h = norm(p.get('headline'))
-            blob = ' '.join([n, s, t, h])
-            return ('playoff' in blob and 'committee' in blob) or ('cfp' in blob)
+            n = norm(p.get("name"))
+            return "playoff selection committee" in n or "cfp" in norm(p.get("shortName"))
 
         def is_ap(p: Dict[str, Any]) -> bool:
-            t = norm(p.get('type'))
-            if t == 'ap':
+            t = norm(p.get("type"))
+            if t == "ap":
                 return True
-            n = norm(p.get('name'))
-            s = norm(p.get('shortName'))
-            return ('ap' in s) or ('ap top' in n)
+            n = norm(p.get("name"))
+            s = norm(p.get("shortName"))
+            return ("ap" in s) or ("ap top" in n)
 
         cfp = [p for p in polls if isinstance(p, dict) and is_cfp(p)]
         ap = [p for p in polls if isinstance(p, dict) and is_ap(p)]
@@ -367,16 +363,16 @@ class NdSchedule(BasePlugin):
         ap.sort(key=poll_epoch, reverse=True)
         poll = cfp[0] if cfp else (ap[0] if ap else None)
         if not poll:
-            return {}, '', ''
+            return {}, "", ""
 
-        label = (poll.get('shortName') or poll.get('name') or '').strip()
+        label = (poll.get("shortName") or poll.get("name") or "").strip()
         updated_fmt = self._format_iso_datetime(poll_iso(poll))
 
-        ranks = poll.get('ranks')
+        ranks = poll.get("ranks")
         if isinstance(ranks, dict):
-            ranks = ranks.get('items') or ranks.get('entries') or ranks.get('ranks')
+            ranks = ranks.get("items") or ranks.get("entries") or ranks.get("ranks")
         if not isinstance(ranks, list):
-            ranks = poll.get('entries') or []
+            ranks = poll.get("entries") or []
         if not isinstance(ranks, list):
             ranks = []
 
@@ -384,9 +380,9 @@ class NdSchedule(BasePlugin):
         for r in ranks:
             if not isinstance(r, dict):
                 continue
-            rk = r.get('current') or r.get('rank') or r.get('position')
-            team = r.get('team') or {}
-            tid = team.get('id')
+            rk = r.get("current") or r.get("rank") or r.get("position")
+            team = r.get("team") or {}
+            tid = team.get("id")
             try:
                 if tid is not None and rk is not None:
                     rank_map[str(tid)] = int(rk)
@@ -395,81 +391,123 @@ class NdSchedule(BasePlugin):
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
 
+    # ----------------------------
+    # Rows
+    # ----------------------------
+
     def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int) -> List[Dict[str, Any]]:
-        events = sched.get('events') or []
+        events = sched.get("events") or []
         if not isinstance(events, list):
             events = []
+
         rows: List[Dict[str, Any]] = []
         for ev in events:
             if not isinstance(ev, dict):
                 continue
-            iso_date = str(ev.get('date') or '')
+
+            iso_date = str(ev.get("date") or "")
             game_dt = self._parse_iso(iso_date)
-            comps = ev.get('competitions')
+
+            comps = ev.get("competitions")
             comp = comps[0] if isinstance(comps, list) and comps else ev
-            date_disp = self._format_game_datetime(iso_date, comp)
-            competitors = (comp.get('competitors') or []) if isinstance(comp, dict) else []
+
+            date_disp = self._format_game_datetime(iso_date)
+
+            competitors = (comp.get("competitors") or []) if isinstance(comp, dict) else []
             if not isinstance(competitors, list):
                 competitors = []
+
             nd_side = opp_side = None
             for c in competitors:
                 if not isinstance(c, dict):
                     continue
-                t = c.get('team') or {}
-                if str(t.get('id')) == str(ND_TEAM_ID):
+                team = c.get("team") or {}
+                if str(team.get("id")) == str(ND_TEAM_ID):
                     nd_side = c
                 else:
                     opp_side = c
+
             if not nd_side or not opp_side:
                 continue
-            opp_team = opp_side.get('team') or {}
-            opp_id = str(opp_team.get('id') or '')
+
+            opp_team = opp_side.get("team") or {}
+            opp_id = str(opp_team.get("id") or "")
             opp_meta = self._get_team_meta(int(opp_id), ttl) if opp_id.isdigit() else {}
+
             school = self._choose_school(opp_team, opp_meta)
-            nickname = self._choose_nickname_v22(opp_meta if opp_meta else opp_team, school)
-            logo = ''
-            logos = opp_team.get('logos')
+            nickname = self._nickname_v22(opp_meta if opp_meta else opp_team, school)
+
+            # logo
+            logo = ""
+            logos = opp_team.get("logos")
             if isinstance(logos, list):
                 for item in logos:
-                    if isinstance(item, dict) and item.get('href'):
-                        logo = item['href']
+                    if isinstance(item, dict) and item.get("href"):
+                        logo = item["href"]
                         break
             if not logo:
-                logo = str(opp_team.get('logo') or '')
+                logo = str(opp_team.get("logo") or "")
+
             rk = rank_map.get(opp_id) if show_rank else None
-            opp_record = self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl) if (opp_id.isdigit() and game_dt) else ''
-            ha = str(nd_side.get('homeAway') or '').lower()
-            neutral = bool(comp.get('neutralSite')) if isinstance(comp, dict) else False
-            site = 'Neutral' if neutral else ('Home' if ha == 'home' else ('Away' if ha == 'away' else ''))
-            nd_score = self._safe_int(nd_side.get('score'))
-            opp_score = self._safe_int(opp_side.get('score'))
-            has_winner_flag = isinstance(nd_side.get('winner'), bool) or isinstance(opp_side.get('winner'), bool)
-            result = ''
-            result_class = ''
+
+            opp_record = self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl) if (opp_id.isdigit() and game_dt) else ""
+
+            # Site
+            ha = str(nd_side.get("homeAway") or "").lower()
+            neutral = bool(comp.get("neutralSite")) if isinstance(comp, dict) else False
+            site = "Neutral" if neutral else ("Home" if ha == "home" else ("Away" if ha == "away" else ""))
+
+            # Result
+            nd_score = self._safe_int(nd_side.get("score"))
+            opp_score = self._safe_int(opp_side.get("score"))
+            has_winner_flag = isinstance(nd_side.get("winner"), bool) or isinstance(opp_side.get("winner"), bool)
+
+            result = ""
+            result_class = ""
             if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
                 if nd_score > opp_score:
-                    result = f"W {nd_score}-{opp_score}"; result_class = 'win'
+                    result = f"W {nd_score}-{opp_score}"
+                    result_class = "win"
                 elif nd_score < opp_score:
-                    result = f"L {nd_score}-{opp_score}"; result_class = 'lose'
+                    result = f"L {nd_score}-{opp_score}"
+                    result_class = "lose"
                 else:
-                    result = f"T {nd_score}-{opp_score}"; result_class = 'tie'
-            rows.append({'date':date_disp,'site':site,'opp_rank':rk,'logo':logo,'opp_school':school,'opp_nickname':nickname,'opp_record':opp_record,'result':result,'result_class':result_class})
+                    result = f"T {nd_score}-{opp_score}"
+                    result_class = "tie"
+
+            rows.append({
+                "date": date_disp,
+                "site": site,
+                "opp_rank": rk,
+                "logo": logo,
+                "opp_school": school,
+                "opp_nickname": nickname,
+                "opp_record": opp_record,
+                "result": result,
+                "result_class": result_class,
+            })
+
         return rows
 
-    def _format_game_datetime(self, iso_str: str, comp: Dict[str, Any]) -> str:
+    # ----------------------------
+    # Formatting
+    # ----------------------------
+
+    def _format_game_datetime(self, iso_str: str) -> str:
+        """All times Eastern; format: 'Mon DD @ H:MM AM/PM'."""
         from datetime import datetime, timezone
         if not iso_str:
-            return 'TBD'
+            return "TBD"
         tzinfo = self._eastern_tz()
         try:
-            dt = datetime.fromisoformat(iso_str.replace('Z','+00:00'))
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime('%b %d')
-            hour = dt_local.strftime('%I').lstrip('0') or '12'
-            minute = dt_local.strftime('%M')
-            ampm = dt_local.strftime('%p')
+            date_part = dt_local.strftime("%b %d")
+            hour = dt_local.strftime("%I").lstrip("0") or "12"
+            minute = dt_local.strftime("%M")
+            ampm = dt_local.strftime("%p")
             return f"{date_part} @ {hour}:{minute} {ampm}"
         except Exception:
             return iso_str[:10]
@@ -477,49 +515,49 @@ class NdSchedule(BasePlugin):
     def _format_iso_datetime(self, iso_str: str) -> str:
         from datetime import datetime, timezone
         if not iso_str:
-            return ''
+            return ""
         tzinfo = self._eastern_tz()
         try:
-            dt = datetime.fromisoformat(iso_str.replace('Z','+00:00'))
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime('%b %d, %Y')
-            hour = dt_local.strftime('%I').lstrip('0') or '12'
-            minute = dt_local.strftime('%M')
-            ampm = dt_local.strftime('%p')
+            date_part = dt_local.strftime("%b %d, %Y")
+            hour = dt_local.strftime("%I").lstrip("0") or "12"
+            minute = dt_local.strftime("%M")
+            ampm = dt_local.strftime("%p")
             return f"{date_part} {hour}:{minute} {ampm}"
         except Exception:
             return iso_str
 
     def _format_updated(self, data: Dict[str, Any]) -> str:
         date_str = None
-        for k in ('timestamp','lastUpdated','date','updateDate'):
+        for k in ("timestamp", "lastUpdated", "date", "updateDate"):
             v = data.get(k)
             if v:
                 date_str = str(v)
                 break
         if not date_str:
-            return ''
+            return ""
         from datetime import datetime, timezone
         tzinfo = self._eastern_tz()
         try:
             if date_str.isdigit() and len(date_str) >= 12:
-                dt = datetime.fromtimestamp(int(date_str)/1000, tz=timezone.utc)
+                dt = datetime.fromtimestamp(int(date_str) / 1000, tz=timezone.utc)
             elif date_str.isdigit():
                 dt = datetime.fromtimestamp(int(date_str), tz=timezone.utc)
             else:
-                dt = datetime.fromisoformat(date_str.replace('Z','+00:00'))
+                dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime('%b %d, %Y')
-            hour = dt_local.strftime('%I').lstrip('0') or '12'
-            minute = dt_local.strftime('%M')
-            ampm = dt_local.strftime('%p')
+            date_part = dt_local.strftime("%b %d, %Y")
+            hour = dt_local.strftime("%I").lstrip("0") or "12"
+            minute = dt_local.strftime("%M")
+            ampm = dt_local.strftime("%p")
             return f"{date_part} {hour}:{minute} {ampm}"
         except Exception:
-            return ''
+            return ""
 
     def _to_bool(self, v: Any) -> bool:
         if isinstance(v, bool):
@@ -530,9 +568,9 @@ class NdSchedule(BasePlugin):
             v = v[-1]
         if isinstance(v, str):
             s = v.strip().lower()
-            if s in ('1','true','yes','on','checked'):
+            if s in ("1", "true", "yes", "on", "checked"):
                 return True
-            if s in ('0','false','no','off',''):
+            if s in ("0", "false", "no", "off", ""):
                 return False
             return True
         return bool(v)
