@@ -10,19 +10,28 @@
     {% if update_line %}<div class="update-line">{{ update_line }}</div>{% endif %}
   </div>
 
-  {% for g in rows %}
-  <div class="row">
-    <div class="date">{{ g.date }}</div>
-    <div class="opp">
-      <div class="rank">{% if g.opp_rank %}#{{ g.opp_rank }}{% endif %}</div>
-      {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="{{ g.opp_school }} logo"/>{% endif %}
-      <div class="school">{{ g.opp_school }}</div>
-      {% if g.opp_nickname %}<div class="nickname">({{ g.opp_nickname }})</div>{% endif %}
-      {% if g.opp_record %}<div class="opp-rec">({{ g.opp_record }})</div>{% endif %}
-    </div>
-    <div class="site">{{ g.site }}</div>
-    <div class="result {{ g.result_class }}">{{ g.result }}</div>
+  <div class="colhdr">
+    <div class="h date">DATE / TIME</div>
+    <div class="h opp">OPPONENT</div>
+    <div class="h site">SITE</div>
+    <div class="h result">RESULT</div>
   </div>
+  <div class="sep"></div>
+
+  {% for g in rows %}
+    <div class="row">
+      <div class="date">{{ g.date }}</div>
+      <div class="opp">
+        <div class="rank">{% if g.opp_rank %}#{{ g.opp_rank }}{% endif %}</div>
+        {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="{{ g.opp_school }} logo"/>{% endif %}
+        <div class="school">{{ g.opp_school }}</div>
+        {% if g.opp_nickname %}<div class="nickname">({{ g.opp_nickname }})</div>{% endif %}
+        {% if g.opp_record %}<div class="opp-rec">({{ g.opp_record }})</div>{% endif %}
+      </div>
+      <div class="site">{{ g.site }}</div>
+      <div class="result {{ g.result_class }}">{{ g.result }}</div>
+    </div>
+    {% if not loop.last %}<div class="sep"></div>{% endif %}
   {% endfor %}
 
   <div class="footnote">* All times Eastern</div>
