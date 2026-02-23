@@ -312,10 +312,6 @@ class NdSchedule(BasePlugin):
                     ties += 1
         return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
 
-    # ----------------------------
-    # Rankings
-    # ----------------------------
-
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
         polls = data.get("rankings")
@@ -389,13 +385,8 @@ class NdSchedule(BasePlugin):
                     rank_map[str(tid)] = int(rk)
             except Exception:
                 pass
-
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
-
-    # ----------------------------
-    # Rows
-    # ----------------------------
 
     def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
@@ -470,10 +461,6 @@ class NdSchedule(BasePlugin):
                 "result_class": result_class,
             })
         return rows
-
-    # ----------------------------
-    # Formatting
-    # ----------------------------
 
     def _format_game_datetime(self, iso_str: str) -> str:
         """All times Eastern; format: 'Mon DD / H:MM AM/PM'."""

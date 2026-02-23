@@ -1,24 +1,39 @@
 
+<!-- NdSchedule settings (v5.1) -->
 <div class="settings-group">
-  <label><b>Season year</b></label>
-  <div class="help">Defaults to current season if not selected. Shows the last 5 seasons.</div>
+  <label for="season_year"><b>Season year</b></label>
+  <input id="season_year" name="season_year" type="number" min="2000" max="2100"
+         value="{{ plugin_settings.season_year|default('') }}" placeholder="(blank = current)"/>
+  <div class="help">Leave blank to use the current season.</div>
 </div>
 
 <div class="settings-group">
-  <label><b>Font size</b></label>
-  <div class="help">Normal / Large / Larger / Largest</div>
+  <label for="font_size"><b>Font size</b></label>
+  <select id="font_size" name="font_size">
+    {% set fs = (plugin_settings.font_size|default('normal'))|lower %}
+    <option value="normal" {% if fs == 'normal' %}selected{% endif %}>Normal</option>
+    <option value="large" {% if fs == 'large' %}selected{% endif %}>Large</option>
+    <option value="larger" {% if fs == 'larger' %}selected{% endif %}>Larger</option>
+    <option value="largest" {% if fs == 'largest' %}selected{% endif %}>Largest</option>
+  </select>
 </div>
 
 <div class="settings-group">
-  <label><b>Compact mode</b></label>
+  <label for="compact_mode"><b>Compact mode</b></label>
+  <input id="compact_mode" name="compact_mode" type="checkbox" value="true"
+         {% if plugin_settings.compact_mode %}checked{% endif %}/>
 </div>
 
 <div class="settings-group">
-  <label><b>Show opponent rank (Top 25; CFP preferred, else AP)</b></label>
-  <div class="help">Rankings are only displayed for the current season.</div>
+  <label for="show_rank"><b>Show opponent rank</b></label>
+  <input id="show_rank" name="show_rank" type="checkbox" value="true"
+         {% if plugin_settings.show_rank is not defined or plugin_settings.show_rank %}checked{% endif %}/>
+  <div class="help">Top 25 (CFP preferred, else AP). Only shown for the current season.</div>
 </div>
 
 <div class="settings-group">
-  <label><b>Cache (minutes)</b></label>
+  <label for="cache_minutes"><b>Cache (minutes)</b></label>
+  <input id="cache_minutes" name="cache_minutes" type="number" min="0" max="1440"
+         value="{{ plugin_settings.cache_minutes|default(30) }}"/>
   <div class="help">0 disables caching.</div>
 </div>
