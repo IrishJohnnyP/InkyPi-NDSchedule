@@ -31,7 +31,6 @@
 </div>
 
 <div class="form-check mt-2">
-  <!-- name=show_nickname ensures the host saves the value when checked -->
   <input class="form-check-input" type="checkbox" id="show_nickname_checkbox" name="show_nickname" value="true">
   <label class="form-check-label" for="show_nickname_checkbox">Show team nickname (smaller/lighter)</label>
 </div>
@@ -77,7 +76,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     populateYears();
 
-    // Load existing settings
     if (typeof loadPluginSettings !== 'undefined') {
       document.getElementById('season_year').value = (pluginSettings.season_year || '');
       document.getElementById('font_size').value = pluginSettings.font_size || 'normal';
@@ -93,7 +91,6 @@
       document.getElementById('font_size').value = 'normal';
     }
 
-    // Sync hidden sources of truth
     syncHiddenBool('compact_mode', 'compact_mode_checkbox');
     syncHiddenBool('show_rank', 'show_rank_checkbox');
     syncHiddenBool('show_nickname_hidden', 'show_nickname_checkbox');
