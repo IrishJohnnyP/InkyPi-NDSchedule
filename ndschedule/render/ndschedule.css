@@ -6,7 +6,7 @@
 .title{font-size:calc(min(3.8dvh,3.8dvw)*var(--title-scale));font-weight:800;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{margin-top:0.45dvh;font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));opacity:0.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .row{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;column-gap:1.6dvw;padding:0.48dvh 0;border-bottom:1px solid rgba(0,0,0,0.12);} 
-.date{padding-right:0.9dvw;font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));font-weight:700;width:14ch;white-space:nowrap;}
+.date{padding-right:0.9dvw;font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));font-weight:700;width:16ch;white-space:nowrap;}
 .opp{display:flex;align-items:baseline;gap:0.70dvw;min-width:0;}
 .rank{font-weight:800;font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));width:3.5ch;flex:0 0 auto;}
 .logo{width:calc(min(2.85dvh,2.85dvw)*var(--scale));height:calc(min(2.85dvh,2.85dvw)*var(--scale));object-fit:contain;filter:none;flex:0 0 auto;}
