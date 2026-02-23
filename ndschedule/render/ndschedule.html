@@ -13,6 +13,7 @@
   <div class="colhdr">
     <div class="h">DATE / TIME</div>
     <div class="h">OPPONENT</div>
+    <div class="h">RECORD</div>
     <div class="h">SITE</div>
     <div class="h">RESULT</div>
   </div>
@@ -22,12 +23,12 @@
     <div class="row">
       <div class="date">{{ g.date }}</div>
       <div class="opp">
-        <div class="rank">{% if g.opp_rank %}#{{ g.opp_rank }}{% endif %}</div>
-        {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="{{ g.opp_school }} logo"/>{% endif %}
+        {% if not hide_rank and g.opp_rank %}<div class="rank">#{{ g.opp_rank }}</div>{% endif %}
+        {% if not hide_logo and g.logo %}<img class="logo" src="{{ g.logo }}" alt="{{ g.opp_school }} logo"/>{% endif %}
         <div class="school">{{ g.opp_school }}</div>
-        {% if g.opp_nickname %}<div class="nickname">({{ g.opp_nickname }})</div>{% endif %}
-        {% if g.opp_record %}<div class="opp-rec">({{ g.opp_record }})</div>{% endif %}
+        {% if not hide_nickname and g.opp_nickname %}<div class="nickname">({{ g.opp_nickname }})</div>{% endif %}
       </div>
+      <div class="rec">{% if g.opp_record %}{{ g.opp_record }}{% endif %}</div>
       <div class="site">{{ g.site }}</div>
       <div class="result {{ g.result_class }}">{{ g.result }}</div>
     </div>
