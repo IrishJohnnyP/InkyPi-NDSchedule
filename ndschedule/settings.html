@@ -1,91 +1,34 @@
-<div class="form-group">
-  <label for="season_year" class="form-label">Season year</label>
-  <select class="form-select" id="season_year" name="season_year"></select>
-  <small class="form-text text-muted">Defaults to current season if not selected. Shows the last 5 seasons.</small>
-</div>
 
-<div class="form-group mt-3">
-  <label for="font_size" class="form-label">Font size</label>
-  <select class="form-select" id="font_size" name="font_size">
-    <option value="normal">Normal</option>
-    <option value="large">Large</option>
-    <option value="larger">Larger</option>
-    <option value="largest">Largest</option>
+<div class="settings-group">
+  <label for="target_display"><b>Target display</b></label>
+  <select id="target_display" name="target_display">
+    <option value="auto" {% if plugin_settings.target_display|default('auto') == 'auto' %}selected{% endif %}>Auto (use configured device resolution)</option>
+    <option value="pimoroni_73" {% if plugin_settings.target_display == 'pimoroni_73' %}selected{% endif %}>Pimoroni Inky Impression 7.3" (800×480)</option>
+    <option value="pimoroni_133" {% if plugin_settings.target_display == 'pimoroni_133' %}selected{% endif %}>Pimoroni Inky Impression 13.3" (1600×1200)</option>
   </select>
+  <div class="help">If set, this overrides the render size. Useful for previewing layouts when switching between 7.3" and 13.3" panels.</div>
 </div>
 
-<input type="hidden" id="compact_mode" name="compact_mode" value="false" />
-<input type="hidden" id="show_rank" name="show_rank" value="true" />
-
-<div class="form-check mt-3">
-  <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
-  <label class="form-check-label" for="compact_mode_checkbox">Compact mode</label>
+<div class="settings-group">
+  <label><b>Season year</b></label>
+  <div class="help">Defaults to current season if not selected. Shows the last 5 seasons.</div>
 </div>
 
-<div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="show_rank_checkbox">
-  <label class="form-check-label" for="show_rank_checkbox">Show opponent rank (Top 25; CFP preferred, else AP)</label>
-  <small class="form-text text-muted d-block">Rankings are only displayed for the current season.</small>
+<div class="settings-group">
+  <label><b>Font size</b></label>
+  <div class="help">Normal / Large / Larger / Largest</div>
 </div>
 
-<div class="form-group mt-3">
-  <label for="cache_minutes" class="form-label">Cache (minutes)</label>
-  <input class="form-control" type="number" id="cache_minutes" name="cache_minutes" min="0" max="1440" value="30">
-  <small class="form-text text-muted">0 disables caching.</small>
+<div class="settings-group">
+  <label><b>Compact mode</b></label>
 </div>
 
-<script>
-  function toBool(v, fallback=true) {
-    if (v === undefined || v === null) return fallback;
-    if (typeof v === 'boolean') return v;
-    const s = String(v).toLowerCase().trim();
-    if (['1','true','yes','on','checked'].includes(s)) return true;
-    if (['0','false','no','off',''].includes(s)) return false;
-    return fallback;
-  }
-  function syncHiddenBool(hiddenId, checkboxId) {
-    const hidden = document.getElementById(hiddenId);
-    const cb = document.getElementById(checkboxId);
-    if (!hidden || !cb) return;
-    hidden.value = cb.checked ? 'true' : 'false';
-  }
-  function populateYears() {
-    const sel = document.getElementById('season_year');
-    if (!sel) return;
-    sel.innerHTML = '';
-    const optAuto = document.createElement('option');
-    optAuto.value = '';
-    optAuto.textContent = 'Current (auto)';
-    sel.appendChild(optAuto);
-    const nowYear = new Date().getFullYear();
-    for (let y = nowYear; y >= nowYear - 4; y--) {
-      const o = document.createElement('option');
-      o.value = String(y);
-      o.textContent = String(y);
-      sel.appendChild(o);
-    }
-  }
+<div class="settings-group">
+  <label><b>Show opponent rank (Top 25; CFP preferred, else AP)</b></label>
+  <div class="help">Rankings are only displayed for the current season.</div>
+</div>
 
-  document.addEventListener('DOMContentLoaded', () => {
-    populateYears();
-
-    if (typeof loadPluginSettings !== 'undefined') {
-      document.getElementById('season_year').value = (pluginSettings.season_year || '');
-      document.getElementById('font_size').value = pluginSettings.font_size || 'normal';
-      document.getElementById('cache_minutes').value = pluginSettings.cache_minutes || 30;
-      document.getElementById('compact_mode_checkbox').checked = toBool(pluginSettings.compact_mode, false);
-      document.getElementById('show_rank_checkbox').checked = toBool(pluginSettings.show_rank, true);
-    } else {
-      document.getElementById('season_year').value = '';
-      document.getElementById('compact_mode_checkbox').checked = false;
-      document.getElementById('show_rank_checkbox').checked = true;
-      document.getElementById('font_size').value = 'normal';
-    }
-
-    syncHiddenBool('compact_mode', 'compact_mode_checkbox');
-    syncHiddenBool('show_rank', 'show_rank_checkbox');
-
-    document.getElementById('compact_mode_checkbox').addEventListener('change', () => syncHiddenBool('compact_mode', 'compact_mode_checkbox'));
-    document.getElementById('show_rank_checkbox').addEventListener('change', () => syncHiddenBool('show_rank', 'show_rank_checkbox'));
-  });
-</script>
+<div class="settings-group">
+  <label><b>Cache (minutes)</b></label>
+  <div class="help">0 disables caching.</div>
+</div>
