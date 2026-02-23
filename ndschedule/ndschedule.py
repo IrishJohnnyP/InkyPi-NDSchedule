@@ -207,7 +207,6 @@ class NdSchedule(BasePlugin):
 
     def _parse_iso(self, iso_str: str):
         from datetime import datetime
-
         if not iso_str:
             return None
         try:
