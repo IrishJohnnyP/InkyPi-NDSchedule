@@ -1,4 +1,13 @@
 <div class="form-group">
+  <label for="target_display" class="form-label">Target display</label>
+  <select class="form-select" id="target_display" name="target_display">
+    <option value="auto">Auto (use configured device)</option>
+    <option value="pimoroni_73">Pimoroni Inky Impression 7.3" (800×480)</option>
+    <option value="pimoroni_133">Pimoroni Inky Impression 13.3" (1600×1200)</option>
+  </select>
+  <small class="form-text text-muted">Choose 800×480 or 1600×1200 when you swap panels.</small>
+</div>
+<div class="form-group mt-3">
   <label for="season_year" class="form-label">Season year</label>
   <select class="form-select" id="season_year" name="season_year"></select>
   <small class="form-text text-muted">Defaults to current season if not selected. Shows the last 5 seasons.</small>
@@ -80,6 +89,7 @@
     populateYears();
     const ps = (typeof pluginSettings !== 'undefined') ? pluginSettings : {};
 
+    document.getElementById('target_display').value = (ps.target_display || 'auto');
     document.getElementById('season_year').value = (ps.season_year || '');
     document.getElementById('font_size').value = (ps.font_size || 'normal');
     document.getElementById('cache_minutes').value = (ps.cache_minutes ?? 30);
