@@ -9,11 +9,9 @@ from utils.http_client import get_http_session
 logger = logging.getLogger(__name__)
 
 ND_TEAM_ID = 87
-
 TEAM_URL = f"https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/{ND_TEAM_ID}"
 RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
 LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football?lang=en&region=us"
-
 ND_LOGO_URL = "https://a.espncdn.com/i/teamlogos/ncaa/500/87.png"
 
 
@@ -38,10 +36,9 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    v13 updates:
-      - Replace location with Home/Away indicator.
-      - Add optional display of opponent nickname in smaller/lighter font.
-      - Keeps opponent pre-game record, Eastern-only times, color logos, and win/lose score colors.
+    v14:
+      - Site column now spells out Home/Away/Neutral.
+      - Nickname display fixed: uses team.nickname (fallback to team.name).
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -430,12 +427,11 @@ class NdSchedule(BasePlugin):
             opp_team = opp_side.get("team") or {}
             opp_id = str(opp_team.get("id") or "")
 
-            # Main name and nickname
             opp_school = opp_team.get("location") or opp_team.get("shortDisplayName") or opp_team.get("displayName") or opp_team.get("name") or "Opponent"
-            opp_nickname = opp_team.get("name") or ""
-            # avoid repeating if nickname already in school string
+            # ESPN commonly provides mascot nickname as team.nickname
+            opp_nickname = (opp_team.get('nickname') or opp_team.get('name') or '')
             if opp_nickname and opp_nickname.lower() in str(opp_school).lower():
-                opp_nickname = ""
+                opp_nickname = ''
 
             logo = ""
             logos = opp_team.get("logos")
@@ -449,7 +445,6 @@ class NdSchedule(BasePlugin):
 
             rk = rank_map.get(opp_id) if show_rank else None
 
-            # opponent record as of before kickoff
             opp_record = ""
             if game_dt is not None and opp_id:
                 try:
@@ -457,25 +452,20 @@ class NdSchedule(BasePlugin):
                 except Exception:
                     opp_record = ""
 
-            # Home/Away indicator based on ND side
+            # Home/Away spelled out
             ha = str(nd_side.get('homeAway') or '').lower()
-            neutral = False
-            try:
-                neutral = bool(comp.get('neutralSite'))
-            except Exception:
-                neutral = False
+            neutral = bool(comp.get('neutralSite')) if isinstance(comp, dict) else False
             if neutral:
-                site = 'N'
+                site = 'Neutral'
             elif ha == 'home':
-                site = 'H'
+                site = 'Home'
             elif ha == 'away':
-                site = 'A'
+                site = 'Away'
             else:
                 site = ''
 
             nd_score = self._safe_int(nd_side.get("score"))
             opp_score = self._safe_int(opp_side.get("score"))
-
             has_winner_flag = isinstance(nd_side.get('winner'), bool) or isinstance(opp_side.get('winner'), bool)
 
             result = ""
