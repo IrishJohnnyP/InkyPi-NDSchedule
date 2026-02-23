@@ -1,8 +1,9 @@
 
-/* Notre Dame schedule – Pimoroni Inky Impression (Spectra 6) optimized (v5.1)
-   Fixes:
-   - Column headers centered over their columns by using identical fixed grid columns.
-   - Keeps Spectra 6-safe styling (no opacity/rgba grays).
+/* Notre Dame schedule – Pimoroni Inky Impression (Spectra 6) optimized (v5.2)
+   - Fixes Largest font overlap by widening the DATE/TIME column at bigger font sizes
+     and clipping with ellipsis.
+   - Column headers centered over columns by using identical fixed grid columns.
+   - Spectra 6 safe: no opacity/rgba grays. WIN/Loss colors are exact RGB.
 */
 
 :root{
@@ -10,6 +11,8 @@
   --white: rgb(255,255,255);
   --win-green: rgb(0,255,0);
   --lose-red: rgb(255,0,0);
+
+  /* Base column widths (normal) */
   --col-date: 16ch;
   --col-site: 7ch;
   --col-result: 10ch;
@@ -25,10 +28,11 @@
   color:var(--black);
 }
 
-.font-normal{--scale:1.00;--title-scale:1.00;}
-.font-large{--scale:1.12;--title-scale:1.06;}
-.font-larger{--scale:1.25;--title-scale:1.12;}
-.font-largest{--scale:1.40;--title-scale:1.18;}
+/* Font scaling + column tuning */
+.font-normal { --scale:1.00; --title-scale:1.00; }
+.font-large  { --scale:1.12; --title-scale:1.06; --col-date:17ch; }
+.font-larger { --scale:1.25; --title-scale:1.12; --col-date:18ch; --col-site:6.5ch; --col-result:9.5ch; }
+.font-largest{ --scale:1.40; --title-scale:1.18; --col-date:19ch; --col-site:6ch;   --col-result:9ch; }
 
 .header{margin-bottom:0.9dvh;}
 .titlewrap{display:flex;align-items:center;gap:1.0dvw;min-width:0;}
@@ -37,6 +41,7 @@
 .title{font-size:calc(min(3.8dvh,3.8dvw)*var(--title-scale));font-weight:900;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{margin-top:0.35dvh;font-size:calc(min(1.65dvh,1.65dvw)*var(--scale));font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+/* Header + rows share identical fixed columns */
 .colhdr, .row{
   display:grid;
   grid-template-columns: var(--col-date) 1fr var(--col-site) var(--col-result);
@@ -45,12 +50,19 @@
 }
 
 .colhdr{padding:0.35dvh 0 0.30dvh 0;}
-.colhdr .h{font-size:calc(min(1.55dvh,1.55dvw)*var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;}
+.colhdr .h{font-size:calc(min(1.55dvh,1.55dvw)*var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 
 .sep{height:1px;background:var(--black);width:100%;}
 
 .row{padding:0.48dvh 0;}
-.date{font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));font-weight:750;white-space:nowrap;text-align:left;}
+.date{
+  font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));
+  font-weight:750;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-align:left;
+}
 
 .opp{display:flex;align-items:center;gap:0.70dvw;min-width:0;}
 .rank{font-weight:900;font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));width:3.5ch;flex:0 0 auto;}
@@ -60,8 +72,8 @@
 .nickname{font-size:calc(min(1.95dvh,1.95dvw)*var(--scale));font-weight:650;margin-left:0.35em;white-space:nowrap;flex:1 1 auto;}
 .opp-rec{font-size:calc(min(2.05dvh,2.05dvw)*var(--scale));font-weight:600;white-space:nowrap;flex:0 0 auto;margin-left:auto;}
 
-.site{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));font-weight:800;text-align:center;white-space:nowrap;}
-.result{font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));font-weight:950;white-space:nowrap;text-align:right;color:var(--black);}
+.site{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.result{font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));font-weight:950;white-space:nowrap;text-align:right;color:var(--black);overflow:hidden;text-overflow:ellipsis;}
 .result.win{color:var(--win-green);} 
 .result.lose{color:var(--lose-red);} 
 .result.tie{color:var(--black);} 
