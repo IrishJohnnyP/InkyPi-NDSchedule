@@ -18,20 +18,27 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
-    /* flex: 1 1 auto; removed to allow nickname to follow immediately */
+    flex: 0 1 auto; /* Allows school to shrink if needed, but not grow alone */
 }
 
-/* Rankings v22-style nickname */
 .nickname {
     font-size: calc(min(1.95dvh,1.95dvw)*var(--scale));
     font-weight: 600;
     opacity: 0.85;
     margin-left: 0.35em;
     white-space: nowrap;
-    flex: 0 0 auto;
+    flex: 1 1 auto; /* Grow this element to push subsequent items (record) to the right */
 }
 
-.opp-rec{font-size:calc(min(1.65dvh,1.65dvw)*var(--scale));font-weight:500;opacity:0.8;white-space:nowrap;flex:0 0 auto;}
+.opp-rec {
+    font-size: calc(min(2.05dvh,2.05dvw)*var(--scale)); /* Match team name font size */
+    font-weight: 500;
+    opacity: 0.8;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    margin-left: auto; /* Ensure it stays right-justified within the .opp container */
+}
+
 .site{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));font-weight:700;width:7ch;text-align:center;opacity:0.9;}
 .result{font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));font-weight:850;white-space:nowrap;width:10ch;text-align:right;}
 .result.win{color:#0a7d00;}.result.lose{color:#b00020;}.result.tie{color:#444444;}
