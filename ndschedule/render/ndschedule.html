@@ -17,8 +17,7 @@
         <div class="opp">
           {% if g.opp_rank %}<span class="rank">#{{ g.opp_rank }}</span>{% endif %}
           {% if g.logo %}<img class="logo" src="{{ g.logo }}" alt="" />{% endif %}
-          <span class="school">{{ g.opp_school }}</span>
-          {% if show_nickname and g.opp_nickname %}<span class="nickname">{{ g.opp_nickname }}</span>{% endif %}
+          <span class="school">{{ g.opp_school }}</span>{% if g.opp_nickname %}<span class="nickname">({{ g.opp_nickname }})</span>{% endif %}
           {% if g.opp_record %}<span class="opp-rec">({{ g.opp_record }})</span>{% endif %}
         </div>
         <div class="site">{{ g.site }}</div>
