@@ -85,3 +85,13 @@ Notes:
   .nd-container{padding:4dvh 4dvw;}
   .compact{padding:3dvh 3.5dvw;}
 }
+/* Compact Mode (7.3") – tighten ONLY space between rows
+   Paste at the END of ndschedule.css
+*/
+.nd-container.display-800.compact .row { 
+  padding: 0.20dvh 0; 
+}
+
+.nd-container.display-800.compact .sep { 
+  opacity: 0.18; 
+}
