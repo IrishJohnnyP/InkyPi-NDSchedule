@@ -1,0 +1,5 @@
+/* Max rows = 13 behavior
+   When more than 13 rows exist, template adds .rows-lots to tighten spacing.
+*/
+.nd-container.rows-lots .row { padding-top: 0.32dvh; padding-bottom: 0.32dvh; }
+.nd-container.rows-lots .header { margin-bottom: 0.9dvh; }

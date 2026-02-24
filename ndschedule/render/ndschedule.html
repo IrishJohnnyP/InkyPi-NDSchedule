@@ -1,11 +1,12 @@
 {% extends "plugin.html" %}
 {% block content %}
-{# Compute density class here so it works even if Python does not pass density_class #}
-{% set n = rows|length %}
+{% set max_rows = 13 %}
+{% set n_total = rows|length %}
+{% set rows_to_show = rows[:max_rows] %}
+
+{# If more than max_rows, apply density class to help fit (and optionally hide footnote) #}
 {% set density = '' %}
-{% if n >= 16 %}{% set density = 'rows-lots' %}
-{% elif n >= 14 %}{% set density = 'rows-many' %}
-{% endif %}
+{% if n_total > max_rows %}{% set density = 'rows-lots' %}{% endif %}
 
 <div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %} {{ display_class }} {{ density }}">
   <div class="header">
@@ -25,7 +26,7 @@
   </div>
   <div class="sep"></div>
 
-  {% for g in rows %}
+  {% for g in rows_to_show %}
     <div class="row">
       <div class="date">{{ g.date }}</div>
       <div class="opp">
@@ -41,6 +42,9 @@
     {% if not loop.last %}<div class="sep"></div>{% endif %}
   {% endfor %}
 
-  <div class="footnote">* All times Eastern</div>
+  <div class="footnote">
+    * All times Eastern
+    {% if n_total > max_rows %} • Showing first {{ max_rows }} of {{ n_total }} games{% endif %}
+  </div>
 </div>
 {% endblock %}
