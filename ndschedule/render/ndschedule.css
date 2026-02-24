@@ -1,18 +1,11 @@
-/* NdSchedule CSS (complete replace)
-   Includes:
-   - Background image support via background.png in the same folder
-   - v5.8 layout (800x480 compact + 1600x1200 poster-like + density classes)
+/* NdSchedule background-through fix (matches cfbrankings pattern)
 
-   To use a background image:
-   1) Put background.png here: src/plugins/ndschedule/render/background.png
-   2) The image will be drawn behind content (cover).
+   Your cfbrankings.css does NOT set a background color on the root container; it relies on
+   the base template (plugin.html) to paint the background. That’s why backgrounds show through there. 
+   We do the same here: no white fill, and explicitly transparent.
 */
 
-html, body{
-  margin:0;
-  padding:0;
-  background: rgb(255,255,255) !important;
-}
+html, body { background: transparent !important; margin:0; padding:0; }
 
 :root{
   --black: rgb(0,0,0);
@@ -35,14 +28,10 @@ html, body{
   font-weight:600;
   --scale:1.0;
   --title-scale:1.0;
-  color: var(--black);
 
-  /* Background image support (falls back to white if missing) */
-  background-color: var(--white);
-  background-image: url('background.png');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
+  /* KEY: allow background to show through */
+  background: transparent !important;
+  color: var(--black);
 }
 
 .font-normal { --scale:1.00; --title-scale:1.00; }
@@ -50,26 +39,14 @@ html, body{
 .font-larger { --scale:1.25; --title-scale:1.12; }
 .font-largest{ --scale:1.40; --title-scale:1.18; }
 
-/* 800x480 stays compact; keep safe widths */
+/* 800x480 sizing */
 .display-800{--col-date: 28ch; --col-rec: 9ch; --col-site: 9ch; --col-result: 13ch;}
 .display-800.font-normal{--col-date: 24ch; --col-rec: 8ch; --col-site: 8ch; --col-result: 12ch;}
 
-/* 1600x1200 poster-like */
-.display-1600{
-  padding:4.5dvh 5.0dvw;
-  --col-date: 34ch;
-  --col-rec: 14ch;
-  --col-site: 14ch;
-  --col-result: 18ch;
-}
-.display-1600.font-largest{
-  --col-date: 38ch;
-  --col-rec: 15ch;
-  --col-site: 15ch;
-  --col-result: 20ch;
-}
+/* 1600x1200 poster-like sizing */
+.display-1600{padding:4.5dvh 5.0dvw; --col-date: 34ch; --col-rec: 14ch; --col-site: 14ch; --col-result: 18ch;}
+.display-1600.font-largest{--col-date: 38ch; --col-rec: 15ch; --col-site: 15ch; --col-result: 20ch;}
 
-/* Header hierarchy */
 .header{margin-bottom:1.6dvh;}
 .display-1600 .header{margin-bottom:2.4dvh;}
 
@@ -85,7 +62,6 @@ html, body{
 .update-line{margin-top:0.35dvh;font-size:calc(min(1.65dvh,1.65dvw)*var(--scale));font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .display-1600 .update-line{margin-top:0.8dvh;font-size:calc(min(2.0dvh,2.0dvw)*var(--scale));text-align:center;}
 
-/* Grid */
 .colhdr, .row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);column-gap: 1.0dvw;align-items:center;}
 .display-1600 .colhdr, .display-1600 .row{column-gap:1.4dvw;}
 
@@ -95,19 +71,16 @@ html, body{
 .colhdr .h{font-size:calc(min(1.45dvh,1.45dvw)*var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 .display-1600 .colhdr .h{font-size:calc(min(2.1dvh,2.1dvw)*var(--scale));letter-spacing:0.06em;}
 
-/* Move RECORD title slightly left */
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
 .display-1600 .colhdr .h:nth-child(3){padding-left:0.6ch;}
 
-/* Separators */
 .sep{height:1px;background:var(--black);width:100%;}
 .display-1600 .sep{height:2px;}
 
-/* Rows */
 .row{padding:0.40dvh 0;}
 .display-1600 .row{padding:1.0dvh 0;}
 
-/* Density fixes for many rows */
+/* Density fixes */
 .display-1600.rows-many .header{margin-bottom:1.6dvh;}
 .display-1600.rows-many .row{padding:0.7dvh 0;}
 .display-1600.rows-many .title{font-size:calc(min(4.9dvh,4.9dvw)*var(--title-scale));}
@@ -133,9 +106,7 @@ html, body{
 .result{font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));font-weight:950;white-space:nowrap;text-align:right;color:var(--black);overflow:hidden;text-overflow:clip;}
 .display-1600 .result{font-size:calc(min(2.4dvh,2.4dvw)*var(--scale));}
 
-.result.win{color:var(--win-green);} 
-.result.lose{color:var(--lose-red);} 
-.result.tie{color:var(--black);} 
+.result.win{color:var(--win-green);} .result.lose{color:var(--lose-red);} .result.tie{color:var(--black);} 
 
 .opp{display:flex;align-items:center;gap:0.65dvw;min-width:0;overflow:hidden;}
 .display-1600 .opp{gap:1.0dvw;}
