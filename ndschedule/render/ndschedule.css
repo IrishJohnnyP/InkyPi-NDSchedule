@@ -6,7 +6,7 @@ Key differences (to avoid forcing white background):
 - NO background rules.
 - color is inherited so theme font color controls work.
 
-This mirrors cfbrankings.css which only styles the plugin container and rows. 
+This mirrors cfbrankings.css which only styles the plugin container and rows.
 */
 
 .nd-container{
@@ -68,3 +68,10 @@ This mirrors cfbrankings.css which only styles the plugin container and rows.
 .compact .logo { width: calc(min(2.8dvh, 2.8dvw) * var(--scale)); height: calc(min(2.8dvh, 2.8dvw) * var(--scale)); }
 
 @media (max-aspect-ratio:1){ .nd-container{ padding:4dvh 4dvw; } .compact{ padding:3dvh 3.5dvw; } }
+
+/* Result color override (Spectra 6-safe)
+   Wins:  rgb(0,255,0)
+   Losses: rgb(255,0,0)
+*/
+.result.win{ color: rgb(0,255,0); }
+.result.lose{ color: rgb(255,0,0); }
