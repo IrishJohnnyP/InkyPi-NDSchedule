@@ -1,12 +1,12 @@
 /* NdSchedule CSS – Manual-display (no auto-hiding), Spectra 6 friendly
 
 Update:
-- DATE/TIME column increased by 25% (22ch -> 27.5ch)
-- SITE column remains 9ch
+- Increase DATE/TIME column by 10%
+- Increase SITE column by 10%
 
-Targets:
-- DATE/TIME fits: "Nov 27 / 12:00 PM" with extra padding room
-- SITE fits: "Neutral"
+Previous values:
+- --col-date: 27.5ch  -> 30.25ch
+- --col-site: 9ch     -> 9.9ch
 
 Notes:
 - Opponent column remains flexible (minmax(0, 1fr)) and will shrink slightly as fixed columns grow.
@@ -27,10 +27,10 @@ Notes:
   --scale: 1.08;
   --title-scale: 1.06;
 
-  /* Column widths (local vars so we don't touch :root/theme) */
-  --col-date: 27.5ch;  /* +25% */
+  /* Column widths */
+  --col-date: 30.25ch; /* +10% */
   --col-rec: 8ch;
-  --col-site: 9ch;
+  --col-site: 9.9ch;   /* +10% */
   --col-result: 11.5ch;
 }
 
