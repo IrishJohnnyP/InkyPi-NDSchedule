@@ -40,13 +40,13 @@ class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
     Presets:
-    - Large Mode (13.3"): largest font + show everything
-    - Compact Mode (7.3"): based on Large Mode but sized for 800×480
-        * forces target_display = pimoroni_73 (800×480)
-        * forces show_time = False
-        * forces hide_nickname = True
-        * forces font_size = 'large'
-      User still controls rank/logo visibility.
+    - Large Mode (13.3"): largest font + show everything (and auto target_display=13.3)
+    - Compact Mode (7.3"): auto target_display=7.3 and apply compact layout
+
+    Per your latest request:
+    - Compact Mode does NOT force show_time or nicknames; user can choose those.
+    - Compact Mode does NOT auto-hide any data.
+    - Compact Mode only influences layout via CSS (tighten row spacing).
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -78,19 +78,15 @@ class NdSchedule(BasePlugin):
             hide_rank = False
             hide_nickname = False
             hide_logo = False
+            settings["target_display"] = "pimoroni_133"
 
-        # Compact Mode preset (when not in Large Mode)
+        # Compact Mode: auto switch to 7.3" target, but DO NOT force content toggles.
         if compact_mode and not large_mode:
-            font_size = "large"
-            show_time = False
-            hide_nickname = True
-            # Force target display to 7.3" for rendering
             settings["target_display"] = "pimoroni_73"
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Resolution with optional override
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -153,6 +149,8 @@ class NdSchedule(BasePlugin):
         }
 
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
+
+    # -------- Helpers below (unchanged from your current drop-in) --------
 
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time()
