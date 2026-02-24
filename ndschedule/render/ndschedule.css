@@ -1,8 +1,16 @@
 /* NdSchedule CSS – Manual-display (no auto-hiding), Spectra 6 friendly
 
 Update:
-- Increase DATE/TIME column to prevent AM/PM truncation
-- Increase SITE column to comfortably fit "Neutral"
+- Increase RESULT column width by 15%
+
+Previous:
+- --col-result: 11.5ch
+New:
+- --col-result: 13.25ch (11.5 * 1.15 = 13.225, rounded)
+
+Other current widths (unchanged):
+- --col-date: 33.5ch
+- --col-site: 11ch
 
 Notes:
 - Opponent column remains flexible (minmax(0, 1fr)) and will shrink slightly as fixed columns grow.
@@ -19,19 +27,14 @@ Notes:
   font-weight:600;
   color: inherit;
 
-  /* Slightly larger base scale */
   --scale: 1.08;
   --title-scale: 1.06;
 
   /* Column widths */
-  /* DATE/TIME: widened further to prevent truncation of AM/PM */
   --col-date: 33.5ch;
-  /* RECORD */
   --col-rec: 8ch;
-  /* SITE: widened to ensure "Neutral" always fits */
   --col-site: 11ch;
-  /* RESULT */
-  --col-result: 11.5ch;
+  --col-result: 13.25ch;
 }
 
 .nd-container.display-800{ padding:2.4dvh 2.6dvw; }
