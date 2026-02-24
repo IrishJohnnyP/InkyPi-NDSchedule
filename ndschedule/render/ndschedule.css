@@ -1,55 +1,73 @@
+/* NdSchedule background "show-through" (cfbrankings-compatible)
 
-/* Notre Dame schedule – color e‑ink optimized */
-.nd-container {width:100%;height:100%;box-sizing:border-box;padding:2.7dvh 2.8dvw;
-  font-family:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-weight:600;
-  --scale:1.0;--title-scale:1.0; background:#FFFFFF; color:#000000;}
+IMPORTANT DIFFERENCE from the broken attempt:
+- Do NOT set html/body background (not even to transparent), because plugin.html likely applies the background image there.
+  Setting it overrides the theme background image and leaves a white page.
 
-/* Font scales */
-.font-normal{--scale:1.00;--title-scale:1.00;}
-.font-large{--scale:1.12;--title-scale:1.06;}
-.font-larger{--scale:1.25;--title-scale:1.12;}
-.font-largest{--scale:1.40;--title-scale:1.18;}
+This file mirrors cfbrankings.css behavior:
+- Container has NO background property.
+- Container does NOT force a text color; it inherits so the UI font color setting works.
+*/
 
-/* Header */
-.header{margin-bottom:1.3dvh;}
-.titlewrap{display:flex;align-items:center;gap:1.0dvw;min-width:0;}
-.title-logo{width:calc(min(3.2dvh,3.2dvw)*var(--scale));height:calc(min(3.2dvh,3.2dvw)*var(--scale));
-  object-fit:contain; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;}
-.title{font-size:calc(min(3.8dvh,3.8dvw)*var(--title-scale));font-weight:800;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.update-line{margin-top:0.45dvh;font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));opacity:0.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-/* Rows */
-.row{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;column-gap:1.6dvw;padding:0.48dvh 0;
-  border-bottom:1px solid rgba(0,0,0,0.12);} 
-.date{padding-right:0.9dvw;font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));font-weight:700;width:16ch;white-space:nowrap;}
-
-/* Opponent block: make logos line up vertically with text */
-.opp{display:flex;align-items:center;gap:0.70dvw;min-width:0;}
-.rank{font-weight:800;font-size:calc(min(1.9dvh,1.9dvw)*var(--scale));width:3.5ch;flex:0 0 auto;}
-.logo{width:calc(min(2.85dvh,2.85dvw)*var(--scale));height:calc(min(2.85dvh,2.85dvw)*var(--scale));aspect-ratio:1/1;
-  object-fit:contain; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; display:block; flex:0 0 auto;}
-.school{font-size:calc(min(2.05dvh,2.05dvw)*var(--scale));font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
-.nickname{font-size:calc(min(1.95dvh,1.95dvw)*var(--scale));font-weight:600;opacity:0.85;margin-left:0.35em;white-space:nowrap;flex:1 1 auto;}
-.opp-rec{font-size:calc(min(2.05dvh,2.05dvw)*var(--scale));font-weight:500;opacity:0.8;white-space:nowrap;flex:0 0 auto;margin-left:auto;}
-
-.site{font-size:calc(min(1.75dvh,1.75dvw)*var(--scale));font-weight:700;width:7ch;text-align:center;opacity:0.9;}
-.result{font-size:calc(min(1.85dvh,1.85dvw)*var(--scale));font-weight:850;white-space:nowrap;width:10ch;text-align:right;}
-
-/* Exact RGB colors as requested */
-:root { --win-green: rgb(0, 255, 0); --lose-red: rgb(255, 0, 0); --tie-gray: #444444; }
-.result.win{color:var(--win-green);} 
-.result.lose{color:var(--lose-red);} 
-.result.tie{color:var(--tie-gray);} 
-
-.footnote{margin-top:0.9dvh;font-size:calc(min(1.6dvh,1.6dvw)*var(--scale));opacity:0.75;}
-
-/* Compact mode tweaks */
-.compact{padding:2.0dvh 2.2dvw;}
-.compact .row{padding:0.28dvh 0;column-gap:1.2dvw;}
-.compact .site{width:6ch;}
-
-/* Small/vertical screens */
-@media (max-aspect-ratio:1){
-  .nd-container{padding:4dvh 4dvw;}
-  .compact{padding:3dvh 3.5dvw;}
+.nd-container{
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  padding:3dvh 3dvw;
+  font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-weight:600;
+  --scale:1.0;
+  --title-scale:1.0;
+  color: inherit;
 }
+
+.font-normal { --scale:1.00; --title-scale:1.00; }
+.font-large  { --scale:1.12; --title-scale:1.08; }
+.font-larger { --scale:1.25; --title-scale:1.16; }
+.font-largest{ --scale:1.40; --title-scale:1.24; }
+
+:root{
+  --col-date: 22ch;
+  --col-rec: 8ch;
+  --col-site: 8ch;
+  --col-result: 12ch;
+}
+
+.display-800{--col-date: 28ch; --col-rec: 9ch; --col-site: 9ch; --col-result: 13ch;}
+.display-1600{--col-date: 34ch; --col-rec: 14ch; --col-site: 14ch; --col-result: 18ch;}
+
+.header{display:flex;flex-direction:column;gap:0.6dvh;margin-bottom:2dvh;}
+.titlewrap{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
+.title-logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:800;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.update-line{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.colhdr, .row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.6dvw;}
+.colhdr{padding:0.35dvh 0 0.30dvh 0;}
+.colhdr .h{font-size:calc(min(1.45dvh,1.45dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
+.colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
+
+.sep{height:1px;background: currentColor; width:100%; opacity:.25;}
+
+.row{padding:0.6dvh 0;}
+.date{font-weight:750;font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.opp{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
+.rank{font-weight:800;font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));width:3.5ch;flex:0 0 auto;}
+.logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.school{font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.nickname{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:600;opacity:.85;margin-left:.35em;white-space:nowrap;}
+
+.rec,.site,.result{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:700;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.rec{text-align:center;}
+.site{text-align:center;}
+.result{text-align:right;font-weight:900;}
+
+.footnote{margin-top:1.2dvh;font-size:calc(min(1.6dvh,1.6dvw) * var(--scale));opacity:.85;}
+
+.compact{padding:2dvh 2.2dvw;}
+.compact .header{margin-bottom:1.2dvh;}
+.compact .row{padding:0.35dvh 0;column-gap:1.1dvw;}
+.compact .logo{width:calc(min(2.8dvh,2.8dvw) * var(--scale));height:calc(min(2.8dvh,2.8dvw) * var(--scale));}
+
+@media (max-aspect-ratio:1){.nd-container{padding:4dvh 4dvw;}.compact{padding:3dvh 3.5dvw;}}
