@@ -1,12 +1,12 @@
-/* NdSchedule background "show-through" (cfbrankings-compatible)
+/* NdSchedule show-through background (cfbrankings-style, v3)
 
-IMPORTANT DIFFERENCE from the broken attempt:
-- Do NOT set html/body background (not even to transparent), because plugin.html likely applies the background image there.
-  Setting it overrides the theme background image and leaves a white page.
+Key differences (to avoid forcing white background):
+- NO html/body rules.
+- NO :root rules (these can overwrite theme CSS variables used by plugin.html).
+- NO background rules.
+- color is inherited so theme font color controls work.
 
-This file mirrors cfbrankings.css behavior:
-- Container has NO background property.
-- Container does NOT force a text color; it inherits so the UI font color setting works.
+This mirrors cfbrankings.css which only styles the plugin container and rows. 
 */
 
 .nd-container{
@@ -18,56 +18,53 @@ This file mirrors cfbrankings.css behavior:
   font-weight:600;
   --scale:1.0;
   --title-scale:1.0;
+
+  /* Theme-controlled */
   color: inherit;
 }
+
+/* Local column vars on the container to avoid clobbering theme :root */
+.nd-container{ --col-date:22ch; --col-rec:8ch; --col-site:8ch; --col-result:12ch; }
+.nd-container.display-800{ --col-date:28ch; --col-rec:9ch; --col-site:9ch; --col-result:13ch; }
+.nd-container.display-1600{ --col-date:34ch; --col-rec:14ch; --col-site:14ch; --col-result:18ch; }
 
 .font-normal { --scale:1.00; --title-scale:1.00; }
 .font-large  { --scale:1.12; --title-scale:1.08; }
 .font-larger { --scale:1.25; --title-scale:1.16; }
 .font-largest{ --scale:1.40; --title-scale:1.24; }
 
-:root{
-  --col-date: 22ch;
-  --col-rec: 8ch;
-  --col-site: 8ch;
-  --col-result: 12ch;
-}
+.header { display:flex; flex-direction:column; gap:0.6dvh; margin-bottom:2dvh; }
+.titlewrap { display:flex; align-items:center; gap:1.2dvw; min-width:0; }
+.title-logo { width: calc(min(3.2dvh, 3.2dvw) * var(--scale)); height: calc(min(3.2dvh, 3.2dvw) * var(--scale)); object-fit:contain; image-rendering:-webkit-optimize-contrast; image-rendering:crisp-edges; }
+.title { font-size: calc(min(4.0dvh, 4.0dvw) * var(--title-scale)); font-weight:800; line-height:1.1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.update-line { font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale)); opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-.display-800{--col-date: 28ch; --col-rec: 9ch; --col-site: 9ch; --col-result: 13ch;}
-.display-1600{--col-date: 34ch; --col-rec: 14ch; --col-site: 14ch; --col-result: 18ch;}
+.colhdr, .row { display:grid; grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result); align-items:center; column-gap:1.6dvw; }
+.colhdr { padding:0.35dvh 0 0.30dvh 0; }
+.colhdr .h { font-size: calc(min(1.45dvh, 1.45dvw) * var(--scale)); font-weight:900; letter-spacing:0.03em; text-transform:uppercase; text-align:center; white-space:nowrap; }
+.colhdr .h:nth-child(3){ text-align:left; padding-left:0.25ch; }
 
-.header{display:flex;flex-direction:column;gap:0.6dvh;margin-bottom:2dvh;}
-.titlewrap{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
-.title-logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
-.title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:800;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.update-line{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sep { height:1px; background: currentColor; width:100%; opacity:.25; }
 
-.colhdr, .row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.6dvw;}
-.colhdr{padding:0.35dvh 0 0.30dvh 0;}
-.colhdr .h{font-size:calc(min(1.45dvh,1.45dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
-.colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
+.row { padding:0.6dvh 0; }
+.date { font-weight:750; font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-.sep{height:1px;background: currentColor; width:100%; opacity:.25;}
+.opp { display:flex; align-items:center; gap:1.2dvw; min-width:0; }
+.rank { font-weight:800; font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale)); width:3.5ch; flex:0 0 auto; }
+.logo { width: calc(min(3.2dvh, 3.2dvw) * var(--scale)); height: calc(min(3.2dvh, 3.2dvw) * var(--scale)); object-fit:contain; image-rendering:-webkit-optimize-contrast; image-rendering:crisp-edges; }
+.school { font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale)); font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.nickname { font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale)); font-weight:600; opacity:.85; margin-left:.35em; white-space:nowrap; }
 
-.row{padding:0.6dvh 0;}
-.date{font-weight:750;font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rec, .site, .result { font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale)); font-weight:700; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:clip; }
+.rec{ text-align:center; }
+.site{ text-align:center; }
+.result{ text-align:right; font-weight:900; }
 
-.opp{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
-.rank{font-weight:800;font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));width:3.5ch;flex:0 0 auto;}
-.logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
-.school{font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.nickname{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:600;opacity:.85;margin-left:.35em;white-space:nowrap;}
+.footnote { margin-top:1.2dvh; font-size: calc(min(1.6dvh, 1.6dvw) * var(--scale)); opacity:.85; }
 
-.rec,.site,.result{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:700;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:clip;}
-.rec{text-align:center;}
-.site{text-align:center;}
-.result{text-align:right;font-weight:900;}
+.compact { padding:2dvh 2.2dvw; }
+.compact .header { margin-bottom:1.2dvh; }
+.compact .row { padding:0.35dvh 0; column-gap:1.1dvw; }
+.compact .logo { width: calc(min(2.8dvh, 2.8dvw) * var(--scale)); height: calc(min(2.8dvh, 2.8dvw) * var(--scale)); }
 
-.footnote{margin-top:1.2dvh;font-size:calc(min(1.6dvh,1.6dvw) * var(--scale));opacity:.85;}
-
-.compact{padding:2dvh 2.2dvw;}
-.compact .header{margin-bottom:1.2dvh;}
-.compact .row{padding:0.35dvh 0;column-gap:1.1dvw;}
-.compact .logo{width:calc(min(2.8dvh,2.8dvw) * var(--scale));height:calc(min(2.8dvh,2.8dvw) * var(--scale));}
-
-@media (max-aspect-ratio:1){.nd-container{padding:4dvh 4dvw;}.compact{padding:3dvh 3.5dvw;}}
+@media (max-aspect-ratio:1){ .nd-container{ padding:4dvh 4dvw; } .compact{ padding:3dvh 3.5dvw; } }
