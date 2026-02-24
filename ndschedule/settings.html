@@ -8,6 +8,13 @@
   <small class="form-text text-muted">Choose 800×480 or 1600×1200 when you swap panels.</small>
 </div>
 
+<div class="form-check mt-3">
+  <input class="form-check-input" type="checkbox" id="large_mode_checkbox">
+  <label class="form-check-label" for="large_mode_checkbox">Large Mode</label>
+  <small class="form-text text-muted d-block">One-tap preset: Largest font + show time + show rank + show logos + show nicknames (no auto-hiding).</small>
+</div>
+<input type="hidden" id="large_mode" name="large_mode" value="false" />
+
 <div class="form-group mt-3">
   <label for="season_year" class="form-label">Season year</label>
   <select class="form-select" id="season_year" name="season_year"></select>
@@ -22,24 +29,25 @@
     <option value="larger">Larger</option>
     <option value="largest">Largest</option>
   </select>
+  <small class="form-text text-muted">Ignored when Large Mode is enabled.</small>
 </div>
 
 <input type="hidden" id="compact_mode" name="compact_mode" value="false" />
+<input type="hidden" id="show_time" name="show_time" value="true" />
 <input type="hidden" id="show_rank" name="show_rank" value="true" />
 <input type="hidden" id="hide_rank" name="hide_rank" value="false" />
 <input type="hidden" id="hide_nickname" name="hide_nickname" value="false" />
 <input type="hidden" id="hide_logo" name="hide_logo" value="false" />
-<input type="hidden" id="show_time" name="show_time" value="true" />
 
 <div class="form-check mt-3">
   <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
   <label class="form-check-label" for="compact_mode_checkbox">Compact mode</label>
+  <small class="form-text text-muted d-block">Ignored when Large Mode is enabled.</small>
 </div>
 
 <div class="form-check mt-2">
   <input class="form-check-input" type="checkbox" id="show_time_checkbox">
   <label class="form-check-label" for="show_time_checkbox">Show game time</label>
-  <small class="form-text text-muted d-block">Turn off to show only the date (reduces width needed in the first column).</small>
 </div>
 
 <div class="form-check mt-2">
@@ -100,6 +108,41 @@
       sel.appendChild(o);
     }
   }
+
+  function applyLargeModeUi(isOn){
+    // Disable manual controls when Large Mode is on
+    const disableIds = [
+      'font_size','compact_mode_checkbox','show_time_checkbox','show_rank_checkbox',
+      'hide_rank_checkbox','hide_nickname_checkbox','hide_logo_checkbox'
+    ];
+    disableIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = isOn;
+    });
+
+    if (isOn) {
+      // Set the visible controls to match the preset
+      const setCb = (id, val) => { const el=document.getElementById(id); if(el) el.checked = val; };
+      const setSel = (id, val) => { const el=document.getElementById(id); if(el) el.value = val; };
+
+      setSel('font_size','largest');
+      setCb('compact_mode_checkbox', false);
+      setCb('show_time_checkbox', true);
+      setCb('show_rank_checkbox', true);
+      setCb('hide_rank_checkbox', false);
+      setCb('hide_nickname_checkbox', false);
+      setCb('hide_logo_checkbox', false);
+
+      // Sync hidden fields
+      syncHiddenBool('compact_mode','compact_mode_checkbox');
+      syncHiddenBool('show_time','show_time_checkbox');
+      syncHiddenBool('show_rank','show_rank_checkbox');
+      syncHiddenBool('hide_rank','hide_rank_checkbox');
+      syncHiddenBool('hide_nickname','hide_nickname_checkbox');
+      syncHiddenBool('hide_logo','hide_logo_checkbox');
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     populateYears();
     const ps = (typeof pluginSettings !== 'undefined') ? pluginSettings : {};
@@ -116,18 +159,30 @@
     document.getElementById('hide_nickname_checkbox').checked = toBool(ps.hide_nickname, false);
     document.getElementById('hide_logo_checkbox').checked = toBool(ps.hide_logo, false);
 
-    syncHiddenBool('compact_mode', 'compact_mode_checkbox');
-    syncHiddenBool('show_time', 'show_time_checkbox');
-    syncHiddenBool('show_rank', 'show_rank_checkbox');
-    syncHiddenBool('hide_rank', 'hide_rank_checkbox');
-    syncHiddenBool('hide_nickname', 'hide_nickname_checkbox');
-    syncHiddenBool('hide_logo', 'hide_logo_checkbox');
+    document.getElementById('large_mode_checkbox').checked = toBool(ps.large_mode, false);
 
-    document.getElementById('compact_mode_checkbox').addEventListener('change', () => syncHiddenBool('compact_mode', 'compact_mode_checkbox'));
-    document.getElementById('show_time_checkbox').addEventListener('change', () => syncHiddenBool('show_time', 'show_time_checkbox'));
-    document.getElementById('show_rank_checkbox').addEventListener('change', () => syncHiddenBool('show_rank', 'show_rank_checkbox'));
-    document.getElementById('hide_rank_checkbox').addEventListener('change', () => syncHiddenBool('hide_rank', 'hide_rank_checkbox'));
-    document.getElementById('hide_nickname_checkbox').addEventListener('change', () => syncHiddenBool('hide_nickname', 'hide_nickname_checkbox'));
-    document.getElementById('hide_logo_checkbox').addEventListener('change', () => syncHiddenBool('hide_logo', 'hide_logo_checkbox'));
+    // Sync hidden fields
+    syncHiddenBool('large_mode','large_mode_checkbox');
+    syncHiddenBool('compact_mode','compact_mode_checkbox');
+    syncHiddenBool('show_time','show_time_checkbox');
+    syncHiddenBool('show_rank','show_rank_checkbox');
+    syncHiddenBool('hide_rank','hide_rank_checkbox');
+    syncHiddenBool('hide_nickname','hide_nickname_checkbox');
+    syncHiddenBool('hide_logo','hide_logo_checkbox');
+
+    // Apply initial Large Mode
+    applyLargeModeUi(document.getElementById('large_mode_checkbox').checked);
+
+    document.getElementById('large_mode_checkbox').addEventListener('change', () => {
+      syncHiddenBool('large_mode','large_mode_checkbox');
+      applyLargeModeUi(document.getElementById('large_mode_checkbox').checked);
+    });
+
+    document.getElementById('compact_mode_checkbox').addEventListener('change', () => syncHiddenBool('compact_mode','compact_mode_checkbox'));
+    document.getElementById('show_time_checkbox').addEventListener('change', () => syncHiddenBool('show_time','show_time_checkbox'));
+    document.getElementById('show_rank_checkbox').addEventListener('change', () => syncHiddenBool('show_rank','show_rank_checkbox'));
+    document.getElementById('hide_rank_checkbox').addEventListener('change', () => syncHiddenBool('hide_rank','hide_rank_checkbox'));
+    document.getElementById('hide_nickname_checkbox').addEventListener('change', () => syncHiddenBool('hide_nickname','hide_nickname_checkbox'));
+    document.getElementById('hide_logo_checkbox').addEventListener('change', () => syncHiddenBool('hide_logo','hide_logo_checkbox'));
   });
 </script>
