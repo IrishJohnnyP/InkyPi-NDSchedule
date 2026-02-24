@@ -1,6 +1,13 @@
 {% extends "plugin.html" %}
 {% block content %}
-<div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %} {{ display_class }} {{ density_class }}">
+{# Compute density class here so it works even if Python does not pass density_class #}
+{% set n = rows|length %}
+{% set density = '' %}
+{% if n >= 16 %}{% set density = 'rows-lots' %}
+{% elif n >= 14 %}{% set density = 'rows-many' %}
+{% endif %}
+
+<div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %} {{ display_class }} {{ density }}">
   <div class="header">
     <div class="titlewrap">
       {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="Notre Dame logo"/>{% endif %}

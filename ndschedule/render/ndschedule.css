@@ -1,18 +1,11 @@
 /* NdSchedule CSS – DROP-IN (Spectra 6 optimized, dual panel, cfbrankings-style background)
 
-What this file guarantees:
 - Background handling like cfbrankings: NO html/body rules, NO :root overrides, NO background paint.
-  This keeps the theme background image from plugin.html visible.
+  Keeps the theme background image from plugin.html visible.
 - Text color inherits from theme (so "font color" setting works).
-- Win/Loss results use Spectra 6-safe pure colors:
-    Win  -> rgb(0,255,0)
-    Loss -> rgb(255,0,0)
-- Dual-panel tuning:
-    .display-800  (7.3" 800×480) compact
-    .display-1600 (13.3" 1600×1200) poster-like
-
-Install:
-- Replace: src/plugins/ndschedule/render/ndschedule.css
+- Win/Loss results use Spectra 6-safe pure colors.
+- Dual-panel tuning for 7.3" (800×480) and 13.3" (1600×1200).
+- Density classes rows-many / rows-lots tighten spacing so all rows remain visible.
 */
 
 .nd-container{
@@ -24,13 +17,15 @@ Install:
   font-weight:600;
   --scale:1.0;
   --title-scale:1.0;
-
-  /* Theme-controlled (do not override background or text color) */
   color: inherit;
+
+  /* Local column vars on the container to avoid clobbering theme :root */
+  --col-date:22ch;
+  --col-rec:8ch;
+  --col-site:8ch;
+  --col-result:12ch;
 }
 
-/* Local column vars on the container to avoid clobbering theme :root */
-.nd-container{ --col-date:22ch; --col-rec:8ch; --col-site:8ch; --col-result:12ch; }
 .nd-container.display-800{ --col-date:28ch; --col-rec:9ch; --col-site:9ch; --col-result:13ch; }
 .nd-container.display-1600{ --col-date:34ch; --col-rec:14ch; --col-site:14ch; --col-result:18ch; }
 
@@ -80,14 +75,13 @@ Install:
   text-align:center;
   white-space:nowrap;
 }
-/* Nudge RECORD header slightly left */
 .colhdr .h:nth-child(3){ text-align:left; padding-left:0.25ch; }
 
 .sep {
   height:1px;
   background: currentColor;
   width:100%;
-  opacity:.22; /* Spectra-friendly: avoids gray dithering */
+  opacity:.22;
 }
 
 .row { padding:0.6dvh 0; }
@@ -151,9 +145,9 @@ Install:
   opacity:.85;
 }
 
-/* ============================================================
+/* =====================
    Dual-panel tuning
-   ============================================================ */
+   ===================== */
 
 /* 7.3" (800×480) – compact */
 .nd-container.display-800 { padding: 2.3dvh 2.5dvw; }
@@ -178,11 +172,27 @@ Install:
   height: calc(min(3.8dvh, 3.8dvw) * var(--scale));
 }
 
-/* Density helpers (big panel + lots of rows) */
-.nd-container.display-1600.rows-many .row { padding: 0.65dvh 0; }
-.nd-container.display-1600.rows-lots .row { padding: 0.50dvh 0; }
-.nd-container.display-1600.rows-many .footnote,
-.nd-container.display-1600.rows-lots .footnote { display: none; }
+/* =====================
+   Density (kicks in via template-calculated class)
+   ===================== */
+
+/* Reduce row padding when there are many rows */
+.nd-container.rows-many .row { padding-top: 0.45dvh; padding-bottom: 0.45dvh; }
+.nd-container.rows-lots .row { padding-top: 0.32dvh; padding-bottom: 0.32dvh; }
+
+/* Tighten header and hide footnote to reclaim vertical space */
+.nd-container.rows-many .header { margin-bottom: 1.1dvh; }
+.nd-container.rows-lots .header { margin-bottom: 0.9dvh; }
+.nd-container.rows-many .footnote,
+.nd-container.rows-lots .footnote { display:none; }
+
+/* Slight title reduction when dense */
+.nd-container.rows-many .title { font-size: calc(min(3.6dvh, 3.6dvw) * var(--title-scale)); }
+.nd-container.rows-lots .title { font-size: calc(min(3.4dvh, 3.4dvw) * var(--title-scale)); }
+
+/* If density + 1600 poster, also tighten row padding further */
+.nd-container.display-1600.rows-many .row { padding-top: 0.40dvh; padding-bottom: 0.40dvh; }
+.nd-container.display-1600.rows-lots .row { padding-top: 0.28dvh; padding-bottom: 0.28dvh; }
 
 .compact { padding:2dvh 2.2dvw; }
 .compact .header { margin-bottom:1.2dvh; }
