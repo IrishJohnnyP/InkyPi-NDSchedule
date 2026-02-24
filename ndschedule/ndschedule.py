@@ -39,17 +39,15 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """Notre Dame Football schedule (v5.8).
+    """Notre Dame Football schedule.
 
-    New in v5.8:
-    - "Show game time" setting (optional time in the date/time column).
-    - Fix for poster-like 1600×1200 + Largest font hiding rows: adds a density class when there are many rows,
-      allowing CSS to tighten spacing so all games remain visible.
+    Drop-in version with:
+    - target_display sizing (800×480 or 1600×1200)
+    - show_time toggle
+    - hide_rank / hide_nickname / hide_logo
+    - Large Mode preset (largest font + show everything)
 
-    Existing:
-    - Target display selection (800×480 / 1600×1200 / auto)
-    - Hide rank / nickname / opponent logo
-    - Uses '/' between date and time.
+    Note: HTML/CSS handle layout; this module focuses on data + template params.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -60,21 +58,34 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
+        # --- Read settings ---
         font_size = (settings.get("font_size") or "normal").strip().lower()
         if font_size not in ("normal", "large", "larger", "largest"):
             font_size = "normal"
 
         compact_mode = self._to_bool(settings.get("compact_mode", False))
+        show_time = self._to_bool(settings.get("show_time", True))
+
         show_rank_setting = self._to_bool(settings.get("show_rank", True))
         hide_rank = self._to_bool(settings.get("hide_rank", False))
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
-        show_time = self._to_bool(settings.get("show_time", True))
+
+        # Large Mode preset: largest font + show everything
+        large_mode = self._to_bool(settings.get("large_mode", False))
+        if large_mode:
+            font_size = "largest"
+            compact_mode = False
+            show_time = True
+            show_rank_setting = True
+            hide_rank = False
+            hide_nickname = False
+            hide_logo = False
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Resolution with optional override
+        # --- Resolution with optional override ---
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -93,6 +104,7 @@ class NdSchedule(BasePlugin):
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
 
+        # --- Season year ---
         current_year = self._detect_current_season_year(ttl)
         selected = settings.get("season_year")
         try:
@@ -100,9 +112,11 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
+        # --- Fetch data ---
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
+        # Only show ranks for current season, unless user hides rank
         effective_show_rank = bool(show_rank_setting and season_year == current_year and not hide_rank)
 
         rank_map: Dict[str, int] = {}
@@ -111,15 +125,16 @@ class NdSchedule(BasePlugin):
         if effective_show_rank:
             rank_map, rank_label, rank_updated = self._get_rank_map(ttl)
 
-        rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl, show_time=show_time)
+        rows = self._build_rows(
+            sched,
+            rank_map,
+            effective_show_rank,
+            season_year,
+            ttl,
+            show_time=show_time,
+        )
 
-        # Density class: used by CSS to tighten the poster layout when there are many rows
-        density_class = ""
-        if len(rows) >= 14:
-            density_class = "rows-many"
-        if len(rows) >= 16:
-            density_class = "rows-lots"
-
+        # Update line
         if effective_show_rank and rank_label:
             update_line = (
                 f"Updated {rank_updated} • Rank source: {rank_label}" if rank_updated else f"Rank source: {rank_label}"
@@ -133,15 +148,13 @@ class NdSchedule(BasePlugin):
             "nd_logo": nd_logo,
             "update_line": update_line,
             "rows": rows,
-            "rows_count": len(rows),
             "font_size": font_size,
             "compact_mode": bool(compact_mode),
+            "show_time": bool(show_time),
             "hide_rank": bool(hide_rank),
             "hide_nickname": bool(hide_nickname),
             "hide_logo": bool(hide_logo),
-            "show_time": bool(show_time),
             "display_class": display_class,
-            "density_class": density_class,
             "plugin_settings": settings,
         }
 
@@ -285,9 +298,16 @@ class NdSchedule(BasePlugin):
 
     def _choose_school(self, team: Dict[str, Any], meta: Dict[str, Any]) -> str:
         for c in (
-            team.get("shortDisplayName"), team.get("location"), team.get("displayName"), team.get("abbreviation"),
-            meta.get("shortDisplayName"), meta.get("location"), meta.get("displayName"), meta.get("abbreviation"),
-            team.get("name"), meta.get("name"),
+            team.get("shortDisplayName"),
+            team.get("location"),
+            team.get("displayName"),
+            team.get("abbreviation"),
+            meta.get("shortDisplayName"),
+            meta.get("location"),
+            meta.get("displayName"),
+            meta.get("abbreviation"),
+            team.get("name"),
+            meta.get("name"),
         ):
             if isinstance(c, str) and c.strip():
                 return c.strip()
@@ -374,6 +394,7 @@ class NdSchedule(BasePlugin):
 
         def poll_epoch(p: Dict[str, Any]) -> float:
             import datetime
+
             iso = poll_iso(p)
             if not iso:
                 return 0.0
@@ -436,7 +457,15 @@ class NdSchedule(BasePlugin):
     # Rows
     # ----------------------------
 
-    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
+    def _build_rows(
+        self,
+        sched: Dict[str, Any],
+        rank_map: Dict[str, int],
+        show_rank: bool,
+        season_year: int,
+        ttl: int,
+        show_time: bool = True,
+    ) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list):
             events = []
@@ -489,7 +518,11 @@ class NdSchedule(BasePlugin):
 
             rk = rank_map.get(opp_id) if show_rank else None
 
-            opp_record = self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl) if (opp_id.isdigit() and game_dt) else ""
+            opp_record = (
+                self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl)
+                if (opp_id.isdigit() and game_dt)
+                else ""
+            )
 
             ha = str(nd_side.get("homeAway") or "").lower()
             neutral = bool(comp.get("neutralSite")) if isinstance(comp, dict) else False
@@ -512,17 +545,19 @@ class NdSchedule(BasePlugin):
                     result = f"T {nd_score}-{opp_score}"
                     result_class = "tie"
 
-            rows.append({
-                "date": date_disp,
-                "site": site,
-                "opp_rank": rk,
-                "logo": logo,
-                "opp_school": school,
-                "opp_nickname": nickname,
-                "opp_record": opp_record,
-                "result": result,
-                "result_class": result_class,
-            })
+            rows.append(
+                {
+                    "date": date_disp,
+                    "site": site,
+                    "opp_rank": rk,
+                    "logo": logo,
+                    "opp_school": school,
+                    "opp_nickname": nickname,
+                    "opp_record": opp_record,
+                    "result": result,
+                    "result_class": result_class,
+                }
+            )
 
         return rows
 
@@ -530,7 +565,7 @@ class NdSchedule(BasePlugin):
     # Formatting
     # ----------------------------
 
-    def _format_game_datetime(self, iso_str: str, show_time: bool=True) -> str:
+    def _format_game_datetime(self, iso_str: str, show_time: bool = True) -> str:
         """All times Eastern.
 
         If show_time is True: 'Mon DD / H:MM AM/PM'
