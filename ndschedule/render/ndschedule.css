@@ -1,198 +1,117 @@
-/* NdSchedule CSS – DROP-IN (Spectra 6 optimized, dual panel, cfbrankings-style background)
+/* NdSchedule CSS – DROP-IN for 12 rows visible (Spectra 6, dual panel, cfbrankings-style background)
 
-What this file guarantees:
-- Background handling like cfbrankings: NO html/body rules, NO :root overrides, NO background paint.
-  This keeps the theme background image from plugin.html visible.
-- Text color inherits from theme (so "font color" setting works).
-- Win/Loss results use Spectra 6-safe pure colors:
-    Win  -> rgb(0,255,0)
-    Loss -> rgb(255,0,0)
-- Dual-panel tuning:
-    .display-800  (7.3" 800×480) compact
-    .display-1600 (13.3" 1600×1200) poster-like
+This file:
+- Keeps background handling compatible with cfbrankings (no html/body rules, no :root background overrides).
+- Keeps spacing proportionate across 800×480 and 1600×1200 using --panel-scale.
+- Adds explicit row-count class support (e.g., .rows-12) to ensure ALL 12 rows fit.
 
-Install:
-- Replace: src/plugins/ndschedule/render/ndschedule.css
+If you consistently have 12 rows, the .rows-12 rules will tighten vertical rhythm automatically.
 */
 
 .nd-container{
   width:100%;
   height:100%;
   box-sizing:border-box;
-  padding:3dvh 3dvw;
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600;
-  --scale:1.0;
-  --title-scale:1.0;
-
-  /* Theme-controlled (do not override background or text color) */
   color: inherit;
+
+  --scale: 1.0;
+  --title-scale: 1.0;
+
+  /* proportional spacing */
+  --panel-scale: 1.00;
+
+  /* base rhythm tuned so 12 rows can fit on 800×480 when rows-12 triggers */
+  --pad-y: 2.1dvh;
+  --pad-x: 2.3dvw;
+  --header-gap: 0.55dvh;
+  --header-mb: 1.2dvh;
+  --colhdr-pt: 0.24dvh;
+  --colhdr-pb: 0.20dvh;
+  --row-py: 0.36dvh;
+  --footnote-mt: 0.85dvh;
+
+  padding: calc(var(--pad-y) * var(--panel-scale)) calc(var(--pad-x) * var(--panel-scale));
+
+  /* column widths (local vars to avoid :root clobbering) */
+  --col-date:22ch; --col-rec:8ch; --col-site:8ch; --col-result:12ch;
 }
 
-/* Local column vars on the container to avoid clobbering theme :root */
-.nd-container{ --col-date:22ch; --col-rec:8ch; --col-site:8ch; --col-result:12ch; }
-.nd-container.display-800{ --col-date:28ch; --col-rec:9ch; --col-site:9ch; --col-result:13ch; }
-.nd-container.display-1600{ --col-date:34ch; --col-rec:14ch; --col-site:14ch; --col-result:18ch; }
+.nd-container.display-800{ --panel-scale: 1.00; --col-date:28ch; --col-rec:9ch; --col-site:9ch; --col-result:13ch; }
+.nd-container.display-1600{ --panel-scale: 1.55; --col-date:34ch; --col-rec:14ch; --col-site:14ch; --col-result:18ch; }
 
 .font-normal { --scale:1.00; --title-scale:1.00; }
 .font-large  { --scale:1.12; --title-scale:1.08; }
 .font-larger { --scale:1.25; --title-scale:1.16; }
 .font-largest{ --scale:1.40; --title-scale:1.24; }
 
-.header { display:flex; flex-direction:column; gap:0.6dvh; margin-bottom:2dvh; }
-.titlewrap { display:flex; align-items:center; gap:1.2dvw; min-width:0; }
-.title-logo {
-  width:  calc(min(3.2dvh, 3.2dvw) * var(--scale));
-  height: calc(min(3.2dvh, 3.2dvw) * var(--scale));
-  object-fit:contain;
-  image-rendering:-webkit-optimize-contrast;
-  image-rendering:crisp-edges;
-}
-.title {
-  font-size: calc(min(4.0dvh, 4.0dvw) * var(--title-scale));
-  font-weight:800;
-  line-height:1.1;
-  min-width:0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.update-line {
-  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
-  opacity:.85;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+.header{display:flex;flex-direction:column;gap:calc(var(--header-gap) * var(--panel-scale));margin-bottom:calc(var(--header-mb) * var(--panel-scale));}
+.titlewrap{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
+.title-logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:800;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.update-line{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-.colhdr, .row {
-  display:grid;
-  grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);
-  align-items:center;
-  column-gap:1.6dvw;
-}
-.colhdr { padding:0.35dvh 0 0.30dvh 0; }
-.colhdr .h {
-  font-size: calc(min(1.45dvh, 1.45dvw) * var(--scale));
-  font-weight:900;
-  letter-spacing:0.03em;
-  text-transform:uppercase;
-  text-align:center;
-  white-space:nowrap;
-}
-/* Nudge RECORD header slightly left */
-.colhdr .h:nth-child(3){ text-align:left; padding-left:0.25ch; }
+.colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.6dvw;}
+.colhdr{padding:calc(var(--colhdr-pt) * var(--panel-scale)) 0 calc(var(--colhdr-pb) * var(--panel-scale)) 0;}
+.colhdr .h{font-size:calc(min(1.45dvh,1.45dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
+.colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
 
-.sep {
-  height:1px;
-  background: currentColor;
-  width:100%;
-  opacity:.22; /* Spectra-friendly: avoids gray dithering */
-}
+.sep{height:1px;background: currentColor;width:100%;opacity:.22;}
 
-.row { padding:0.6dvh 0; }
-.date {
-  font-weight:750;
-  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+.row{padding:calc(var(--row-py) * var(--panel-scale)) 0;}
+.date{font-weight:750;font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-.opp { display:flex; align-items:center; gap:1.2dvw; min-width:0; }
-.rank {
-  font-weight:800;
-  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
-  width:3.5ch;
-  flex:0 0 auto;
-}
-.logo {
-  width:  calc(min(3.2dvh, 3.2dvw) * var(--scale));
-  height: calc(min(3.2dvh, 3.2dvw) * var(--scale));
-  object-fit:contain;
-  image-rendering:-webkit-optimize-contrast;
-  image-rendering:crisp-edges;
-}
-.school {
-  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
-  font-weight:800;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  min-width:0;
-}
-.nickname {
-  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
-  font-weight:600;
-  opacity:.85;
-  margin-left:.35em;
-  white-space:nowrap;
-}
+.opp{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
+.rank{font-weight:800;font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));width:3.5ch;flex:0 0 auto;}
+.logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.school{font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.nickname{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:600;opacity:.85;margin-left:.35em;white-space:nowrap;}
 
-.rec, .site, .result {
-  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
-  font-weight:700;
-  opacity:.9;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:clip;
+.rec,.site,.result{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:700;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.rec{text-align:center;}
+.site{text-align:center;}
+.result{text-align:right;font-weight:900;}
+
+/* Win/Loss colors (Spectra-safe) */
+.result.win{ color: rgb(0,255,0); }
+.result.lose{ color: rgb(255,0,0); }
+
+.footnote{margin-top:calc(var(--footnote-mt) * var(--panel-scale));font-size:calc(min(1.6dvh,1.6dvw) * var(--scale));opacity:.85;}
+
+/* ------------------------------------------------------------
+   EXACT 12-ROW FIT MODE
+   ------------------------------------------------------------ */
+
+/* If there are 12 rows, tighten spacing so all rows are visible.
+   Applies to BOTH displays, but stronger on display-800.
+*/
+.nd-container.rows-12{ 
+  --header-mb: 0.95dvh;
+  --row-py: 0.28dvh;
+  --footnote-mt: 0.0dvh;
 }
-.rec{ text-align:center; }
-.site{ text-align:center; }
-.result{ text-align:right; font-weight:900; }
+.nd-container.rows-12 .footnote{ display:none; }
 
-/* Spectra 6-safe win/loss colors */
-.result.win  { color: rgb(0,255,0); }
-.result.lose { color: rgb(255,0,0); }
+/* For 800×480 with 12 rows, also hide nicknames to reduce row height variance */
+.nd-container.display-800.rows-12 .nickname{ display:none; }
+.nd-container.display-800.rows-12 .update-line{ display:none; }
+.nd-container.display-800.rows-12{ --pad-y: 1.7dvh; }
 
-.footnote {
-  margin-top:1.2dvh;
-  font-size: calc(min(1.6dvh, 1.6dvw) * var(--scale));
-  opacity:.85;
-}
+/* For 1600×1200 with largest font and 12 rows, slightly reduce row text size */
+.nd-container.display-1600.font-largest.rows-12 .date,
+.nd-container.display-1600.font-largest.rows-12 .school,
+.nd-container.display-1600.font-largest.rows-12 .rec,
+.nd-container.display-1600.font-largest.rows-12 .site,
+.nd-container.display-1600.font-largest.rows-12 .result{ font-size: calc(0.92 * 1em); }
+.nd-container.display-1600.font-largest.rows-12 .update-line{ display:none; }
+.nd-container.display-1600.font-largest.rows-12 .nickname{ display:none; }
 
-/* ============================================================
-   Dual-panel tuning
-   ============================================================ */
-
-/* 7.3" (800×480) – compact */
-.nd-container.display-800 { padding: 2.3dvh 2.5dvw; }
-.nd-container.display-800 .header { margin-bottom: 1.4dvh; }
-.nd-container.display-800 .row { padding: 0.42dvh 0; }
-.nd-container.display-800 .logo {
-  width:  calc(min(2.7dvh, 2.7dvw) * var(--scale));
-  height: calc(min(2.7dvh, 2.7dvw) * var(--scale));
-}
-
-/* 13.3" (1600×1200) – poster-like */
-.nd-container.display-1600 { padding: 4.8dvh 5.2dvw; }
-.nd-container.display-1600 .sep { opacity: 0.28; height: 2px; }
-.nd-container.display-1600 .row { padding: 0.9dvh 0; }
-.nd-container.display-1600 .title-logo {
-  width:  calc(min(5.2dvh, 5.2dvw) * var(--scale));
-  height: calc(min(5.2dvh, 5.2dvw) * var(--scale));
-}
-.nd-container.display-1600 .title { letter-spacing: 0.01em; }
-.nd-container.display-1600 .logo {
-  width:  calc(min(3.8dvh, 3.8dvw) * var(--scale));
-  height: calc(min(3.8dvh, 3.8dvw) * var(--scale));
-}
-
-/* Density helpers (big panel + lots of rows) */
-.nd-container.display-1600.rows-many .row { padding: 0.65dvh 0; }
-.nd-container.display-1600.rows-lots .row { padding: 0.50dvh 0; }
-.nd-container.display-1600.rows-many .footnote,
-.nd-container.display-1600.rows-lots .footnote { display: none; }
-
-.compact { padding:2dvh 2.2dvw; }
-.compact .header { margin-bottom:1.2dvh; }
-.compact .row { padding:0.35dvh 0; column-gap:1.1dvw; }
-.compact .logo {
-  width:  calc(min(2.8dvh, 2.8dvw) * var(--scale));
-  height: calc(min(2.8dvh, 2.8dvw) * var(--scale));
-}
+/* Compact mode still works */
+.compact{padding:calc(1.8dvh * var(--panel-scale)) calc(2.0dvw * var(--panel-scale));}
+.compact .header{margin-bottom:calc(0.9dvh * var(--panel-scale));}
+.compact .row{padding:calc(0.24dvh * var(--panel-scale)) 0;}
 
 @media (max-aspect-ratio:1){
-  .nd-container{ padding:4dvh 4dvw; }
-  .compact{ padding:3dvh 3.5dvw; }
+  .nd-container{padding:calc(3.6dvh * var(--panel-scale)) calc(3.6dvw * var(--panel-scale));}
 }
