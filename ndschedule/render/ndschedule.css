@@ -1,5 +1,18 @@
-/* NdSchedule show-through background (cfbrankings-style, baseline used for win/loss patch)
-   Note: This CSS intentionally does not paint a background so the theme can show through.
+/* NdSchedule CSS – DROP-IN (Spectra 6 optimized, dual panel, cfbrankings-style background)
+
+What this file guarantees:
+- Background handling like cfbrankings: NO html/body rules, NO :root overrides, NO background paint.
+  This keeps the theme background image from plugin.html visible.
+- Text color inherits from theme (so "font color" setting works).
+- Win/Loss results use Spectra 6-safe pure colors:
+    Win  -> rgb(0,255,0)
+    Loss -> rgb(255,0,0)
+- Dual-panel tuning:
+    .display-800  (7.3" 800×480) compact
+    .display-1600 (13.3" 1600×1200) poster-like
+
+Install:
+- Replace: src/plugins/ndschedule/render/ndschedule.css
 */
 
 .nd-container{
@@ -11,63 +24,175 @@
   font-weight:600;
   --scale:1.0;
   --title-scale:1.0;
+
+  /* Theme-controlled (do not override background or text color) */
   color: inherit;
 }
+
+/* Local column vars on the container to avoid clobbering theme :root */
+.nd-container{ --col-date:22ch; --col-rec:8ch; --col-site:8ch; --col-result:12ch; }
+.nd-container.display-800{ --col-date:28ch; --col-rec:9ch; --col-site:9ch; --col-result:13ch; }
+.nd-container.display-1600{ --col-date:34ch; --col-rec:14ch; --col-site:14ch; --col-result:18ch; }
 
 .font-normal { --scale:1.00; --title-scale:1.00; }
 .font-large  { --scale:1.12; --title-scale:1.08; }
 .font-larger { --scale:1.25; --title-scale:1.16; }
 .font-largest{ --scale:1.40; --title-scale:1.24; }
 
-:root{
-  --col-date: 22ch;
-  --col-rec: 8ch;
-  --col-site: 8ch;
-  --col-result: 12ch;
+.header { display:flex; flex-direction:column; gap:0.6dvh; margin-bottom:2dvh; }
+.titlewrap { display:flex; align-items:center; gap:1.2dvw; min-width:0; }
+.title-logo {
+  width:  calc(min(3.2dvh, 3.2dvw) * var(--scale));
+  height: calc(min(3.2dvh, 3.2dvw) * var(--scale));
+  object-fit:contain;
+  image-rendering:-webkit-optimize-contrast;
+  image-rendering:crisp-edges;
+}
+.title {
+  font-size: calc(min(4.0dvh, 4.0dvw) * var(--title-scale));
+  font-weight:800;
+  line-height:1.1;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.update-line {
+  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
+  opacity:.85;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
-.display-800{--col-date: 28ch; --col-rec: 9ch; --col-site: 9ch; --col-result: 13ch;}
-.display-1600{--col-date: 34ch; --col-rec: 14ch; --col-site: 14ch; --col-result: 18ch;}
+.colhdr, .row {
+  display:grid;
+  grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);
+  align-items:center;
+  column-gap:1.6dvw;
+}
+.colhdr { padding:0.35dvh 0 0.30dvh 0; }
+.colhdr .h {
+  font-size: calc(min(1.45dvh, 1.45dvw) * var(--scale));
+  font-weight:900;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  text-align:center;
+  white-space:nowrap;
+}
+/* Nudge RECORD header slightly left */
+.colhdr .h:nth-child(3){ text-align:left; padding-left:0.25ch; }
 
-.header{display:flex;flex-direction:column;gap:0.6dvh;margin-bottom:2dvh;}
-.titlewrap{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
-.title-logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
-.title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:800;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.update-line{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sep {
+  height:1px;
+  background: currentColor;
+  width:100%;
+  opacity:.22; /* Spectra-friendly: avoids gray dithering */
+}
 
-.colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.6dvw;}
-.colhdr{padding:0.35dvh 0 0.30dvh 0;}
-.colhdr .h{font-size:calc(min(1.45dvh,1.45dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
-.colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
+.row { padding:0.6dvh 0; }
+.date {
+  font-weight:750;
+  font-size: calc(min(2.0dvh, 2.0dvw) * var(--scale));
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-.sep{height:1px;background: currentColor;width:100%;opacity:.25;}
+.opp { display:flex; align-items:center; gap:1.2dvw; min-width:0; }
+.rank {
+  font-weight:800;
+  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
+  width:3.5ch;
+  flex:0 0 auto;
+}
+.logo {
+  width:  calc(min(3.2dvh, 3.2dvw) * var(--scale));
+  height: calc(min(3.2dvh, 3.2dvw) * var(--scale));
+  object-fit:contain;
+  image-rendering:-webkit-optimize-contrast;
+  image-rendering:crisp-edges;
+}
+.school {
+  font-size: calc(min(2.2dvh, 2.2dvw) * var(--scale));
+  font-weight:800;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0;
+}
+.nickname {
+  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
+  font-weight:600;
+  opacity:.85;
+  margin-left:.35em;
+  white-space:nowrap;
+}
 
-.row{padding:0.6dvh 0;}
-.date{font-weight:750;font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rec, .site, .result {
+  font-size: calc(min(1.8dvh, 1.8dvw) * var(--scale));
+  font-weight:700;
+  opacity:.9;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:clip;
+}
+.rec{ text-align:center; }
+.site{ text-align:center; }
+.result{ text-align:right; font-weight:900; }
 
-.opp{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
-.rank{font-weight:800;font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));width:3.5ch;flex:0 0 auto;}
-.logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
-.school{font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.nickname{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:600;opacity:.85;margin-left:.35em;white-space:nowrap;}
+/* Spectra 6-safe win/loss colors */
+.result.win  { color: rgb(0,255,0); }
+.result.lose { color: rgb(255,0,0); }
 
-.rec,.site,.result{font-size:calc(min(1.8dvh,1.8dvw) * var(--scale));font-weight:700;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:clip;}
-.rec{text-align:center;}
-.site{text-align:center;}
-.result{text-align:right;font-weight:900;}
+.footnote {
+  margin-top:1.2dvh;
+  font-size: calc(min(1.6dvh, 1.6dvw) * var(--scale));
+  opacity:.85;
+}
 
-.footnote{margin-top:1.2dvh;font-size:calc(min(1.6dvh,1.6dvw) * var(--scale));opacity:.85;}
+/* ============================================================
+   Dual-panel tuning
+   ============================================================ */
 
-.compact{padding:2dvh 2.2dvw;}
-.compact .header{margin-bottom:1.2dvh;}
-.compact .row{padding:0.35dvh 0;column-gap:1.1dvw;}
-.compact .logo{width:calc(min(2.8dvh,2.8dvw) * var(--scale));height:calc(min(2.8dvh,2.8dvw) * var(--scale));}
+/* 7.3" (800×480) – compact */
+.nd-container.display-800 { padding: 2.3dvh 2.5dvw; }
+.nd-container.display-800 .header { margin-bottom: 1.4dvh; }
+.nd-container.display-800 .row { padding: 0.42dvh 0; }
+.nd-container.display-800 .logo {
+  width:  calc(min(2.7dvh, 2.7dvw) * var(--scale));
+  height: calc(min(2.7dvh, 2.7dvw) * var(--scale));
+}
 
-@media (max-aspect-ratio:1){.nd-container{padding:4dvh 4dvw;}.compact{padding:3dvh 3.5dvw;}}
+/* 13.3" (1600×1200) – poster-like */
+.nd-container.display-1600 { padding: 4.8dvh 5.2dvw; }
+.nd-container.display-1600 .sep { opacity: 0.28; height: 2px; }
+.nd-container.display-1600 .row { padding: 0.9dvh 0; }
+.nd-container.display-1600 .title-logo {
+  width:  calc(min(5.2dvh, 5.2dvw) * var(--scale));
+  height: calc(min(5.2dvh, 5.2dvw) * var(--scale));
+}
+.nd-container.display-1600 .title { letter-spacing: 0.01em; }
+.nd-container.display-1600 .logo {
+  width:  calc(min(3.8dvh, 3.8dvw) * var(--scale));
+  height: calc(min(3.8dvh, 3.8dvw) * var(--scale));
+}
 
-/* Result color override (Spectra 6-safe)
-   Wins:  rgb(0,255,0)
-   Losses: rgb(255,0,0)
-*/
-.result.win{ color: rgb(0,255,0); }
-.result.lose{ color: rgb(255,0,0); }
+/* Density helpers (big panel + lots of rows) */
+.nd-container.display-1600.rows-many .row { padding: 0.65dvh 0; }
+.nd-container.display-1600.rows-lots .row { padding: 0.50dvh 0; }
+.nd-container.display-1600.rows-many .footnote,
+.nd-container.display-1600.rows-lots .footnote { display: none; }
+
+.compact { padding:2dvh 2.2dvw; }
+.compact .header { margin-bottom:1.2dvh; }
+.compact .row { padding:0.35dvh 0; column-gap:1.1dvw; }
+.compact .logo {
+  width:  calc(min(2.8dvh, 2.8dvw) * var(--scale));
+  height: calc(min(2.8dvh, 2.8dvw) * var(--scale));
+}
+
+@media (max-aspect-ratio:1){
+  .nd-container{ padding:4dvh 4dvw; }
+  .compact{ padding:3dvh 3.5dvw; }
+}
