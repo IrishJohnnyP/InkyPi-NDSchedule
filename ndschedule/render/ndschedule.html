@@ -1,14 +1,6 @@
 {% extends "plugin.html" %}
 {% block content %}
-{% set max_rows = 13 %}
-{% set n_total = rows|length %}
-{% set rows_to_show = rows[:max_rows] %}
-
-{# If more than max_rows, apply density class to help fit (and optionally hide footnote) #}
-{% set density = '' %}
-{% if n_total > max_rows %}{% set density = 'rows-lots' %}{% endif %}
-
-<div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %} {{ display_class }} {{ density }}">
+<div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %} {{ display_class }} {{ density_class }}">
   <div class="header">
     <div class="titlewrap">
       {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="Notre Dame logo"/>{% endif %}
@@ -26,7 +18,7 @@
   </div>
   <div class="sep"></div>
 
-  {% for g in rows_to_show %}
+  {% for g in rows %}
     <div class="row">
       <div class="date">{{ g.date }}</div>
       <div class="opp">
@@ -42,9 +34,6 @@
     {% if not loop.last %}<div class="sep"></div>{% endif %}
   {% endfor %}
 
-  <div class="footnote">
-    * All times Eastern
-    {% if n_total > max_rows %} • Showing first {{ max_rows }} of {{ n_total }} games{% endif %}
-  </div>
+  <div class="footnote">* All times Eastern</div>
 </div>
 {% endblock %}
