@@ -1,8 +1,18 @@
-/* NdSchedule v5.8 CSS
-   - Compact profile for 800x480
-   - Poster-like profile for 1600x1200
-   - Density classes (rows-many / rows-lots) to prevent rows from being pushed off-screen at Largest.
+/* NdSchedule CSS (complete replace)
+   Includes:
+   - Background image support via background.png in the same folder
+   - v5.8 layout (800x480 compact + 1600x1200 poster-like + density classes)
+
+   To use a background image:
+   1) Put background.png here: src/plugins/ndschedule/render/background.png
+   2) The image will be drawn behind content (cover).
 */
+
+html, body{
+  margin:0;
+  padding:0;
+  background: rgb(255,255,255) !important;
+}
 
 :root{
   --black: rgb(0,0,0);
@@ -16,7 +26,24 @@
   --col-result: 12ch;
 }
 
-.nd-container{width:100%;height:100%;box-sizing:border-box;padding:2.7dvh 2.8dvw;font-family:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-weight:600;--scale:1.0;--title-scale:1.0;background:var(--white);color:var(--black);}
+.nd-container{
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  padding:2.7dvh 2.8dvw;
+  font-family:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  font-weight:600;
+  --scale:1.0;
+  --title-scale:1.0;
+  color: var(--black);
+
+  /* Background image support (falls back to white if missing) */
+  background-color: var(--white);
+  background-image: url('background.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+}
 
 .font-normal { --scale:1.00; --title-scale:1.00; }
 .font-large  { --scale:1.12; --title-scale:1.06; }
@@ -80,7 +107,7 @@
 .row{padding:0.40dvh 0;}
 .display-1600 .row{padding:1.0dvh 0;}
 
-/* Density fixes for many rows (prevents bottom rows from going off-screen) */
+/* Density fixes for many rows */
 .display-1600.rows-many .header{margin-bottom:1.6dvh;}
 .display-1600.rows-many .row{padding:0.7dvh 0;}
 .display-1600.rows-many .title{font-size:calc(min(4.9dvh,4.9dvw)*var(--title-scale));}
