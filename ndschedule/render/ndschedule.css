@@ -1,17 +1,13 @@
 /* NdSchedule CSS – Manual-display (no auto-hiding), Spectra 6 friendly
 
 Update:
-- Increase DATE/TIME column by 10%
-- Increase SITE column by 10%
-
-Previous values:
-- --col-date: 27.5ch  -> 30.25ch
-- --col-site: 9ch     -> 9.9ch
+- Increase DATE/TIME column to prevent AM/PM truncation
+- Increase SITE column to comfortably fit "Neutral"
 
 Notes:
 - Opponent column remains flexible (minmax(0, 1fr)) and will shrink slightly as fixed columns grow.
-- User decides what to hide via settings (no automatic hiding)
-- cfbrankings-style theme background show-through (no html/body rules, no background paint)
+- User decides what to hide via settings (no automatic hiding).
+- cfbrankings-style theme background show-through (no html/body rules, no background paint).
 */
 
 .nd-container{
@@ -28,9 +24,13 @@ Notes:
   --title-scale: 1.06;
 
   /* Column widths */
-  --col-date: 30.25ch; /* +10% */
+  /* DATE/TIME: widened further to prevent truncation of AM/PM */
+  --col-date: 33.5ch;
+  /* RECORD */
   --col-rec: 8ch;
-  --col-site: 9.9ch;   /* +10% */
+  /* SITE: widened to ensure "Neutral" always fits */
+  --col-site: 11ch;
+  /* RESULT */
   --col-result: 11.5ch;
 }
 
