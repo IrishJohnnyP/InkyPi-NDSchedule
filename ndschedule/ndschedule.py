@@ -39,13 +39,17 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """Notre Dame Football schedule (patched).
+    """Notre Dame Football schedule (v5.8).
 
-    Fixes:
-    - Restores required method _build_rows (previous zip raised: no attribute '_build_rows').
-    - Supports target_display sizing (800x480 vs 1600x1200) via settings['target_display'].
-    - Supports hide_rank/hide_nickname/hide_logo flags.
-    - Date/time separator uses '/'.
+    New in v5.8:
+    - "Show game time" setting (optional time in the date/time column).
+    - Fix for poster-like 1600×1200 + Largest font hiding rows: adds a density class when there are many rows,
+      allowing CSS to tighten spacing so all games remain visible.
+
+    Existing:
+    - Target display selection (800×480 / 1600×1200 / auto)
+    - Hide rank / nickname / opponent logo
+    - Uses '/' between date and time.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -65,6 +69,7 @@ class NdSchedule(BasePlugin):
         hide_rank = self._to_bool(settings.get("hide_rank", False))
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
+        show_time = self._to_bool(settings.get("show_time", True))
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
@@ -106,7 +111,14 @@ class NdSchedule(BasePlugin):
         if effective_show_rank:
             rank_map, rank_label, rank_updated = self._get_rank_map(ttl)
 
-        rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl)
+        rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl, show_time=show_time)
+
+        # Density class: used by CSS to tighten the poster layout when there are many rows
+        density_class = ""
+        if len(rows) >= 14:
+            density_class = "rows-many"
+        if len(rows) >= 16:
+            density_class = "rows-lots"
 
         if effective_show_rank and rank_label:
             update_line = (
@@ -121,12 +133,15 @@ class NdSchedule(BasePlugin):
             "nd_logo": nd_logo,
             "update_line": update_line,
             "rows": rows,
+            "rows_count": len(rows),
             "font_size": font_size,
             "compact_mode": bool(compact_mode),
             "hide_rank": bool(hide_rank),
             "hide_nickname": bool(hide_nickname),
             "hide_logo": bool(hide_logo),
+            "show_time": bool(show_time),
             "display_class": display_class,
+            "density_class": density_class,
             "plugin_settings": settings,
         }
 
@@ -418,10 +433,10 @@ class NdSchedule(BasePlugin):
         return rank_map, label, updated_fmt
 
     # ----------------------------
-    # Rows (THIS IS WHAT WAS MISSING)
+    # Rows
     # ----------------------------
 
-    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int) -> List[Dict[str, Any]]:
+    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list):
             events = []
@@ -437,7 +452,7 @@ class NdSchedule(BasePlugin):
             comps = ev.get("competitions")
             comp = comps[0] if isinstance(comps, list) and comps else ev
 
-            date_disp = self._format_game_datetime(iso_date)
+            date_disp = self._format_game_datetime(iso_date, show_time=show_time)
 
             competitors = (comp.get("competitors") or []) if isinstance(comp, dict) else []
             if not isinstance(competitors, list):
@@ -515,8 +530,12 @@ class NdSchedule(BasePlugin):
     # Formatting
     # ----------------------------
 
-    def _format_game_datetime(self, iso_str: str) -> str:
-        """All times Eastern; format: 'Mon DD / H:MM AM/PM'."""
+    def _format_game_datetime(self, iso_str: str, show_time: bool=True) -> str:
+        """All times Eastern.
+
+        If show_time is True: 'Mon DD / H:MM AM/PM'
+        If show_time is False: 'Mon DD'
+        """
         from datetime import datetime, timezone
 
         if not iso_str:
@@ -528,6 +547,8 @@ class NdSchedule(BasePlugin):
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
             date_part = dt_local.strftime("%b %d")
+            if not show_time:
+                return date_part
             hour = dt_local.strftime("%I").lstrip("0") or "12"
             minute = dt_local.strftime("%M")
             ampm = dt_local.strftime("%p")
