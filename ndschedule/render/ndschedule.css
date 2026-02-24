@@ -1,12 +1,15 @@
 /* NdSchedule CSS – Manual-display (no auto-hiding), Spectra 6 friendly
 
-Requested sizing updates:
-- DATE/TIME column widened to fit: "Nov 27 / 12:00 PM"
-- RESULT column widened to fit: "100-100" (and still fits "W 100-100")
-- SITE column widened to fit: "Neutral"
+Update:
+- Increased DATE/TIME column width
+- Increased SITE column width
+
+Targets:
+- DATE/TIME fits: "Nov 27 / 12:00 PM"
+- SITE fits: "Neutral"
 
 Other behavior preserved:
-- Opponent column remains the flexible column (minmax(0, 1fr))
+- Opponent column remains flexible (minmax(0, 1fr))
 - User decides what to hide via settings (no automatic hiding)
 - Slightly larger overall font sizing
 - cfbrankings-style theme background show-through (no html/body rules, no background paint)
@@ -26,13 +29,13 @@ Other behavior preserved:
   --title-scale: 1.06;
 
   /* Column widths (local vars so we don't touch :root/theme) */
-  /* DATE/TIME: fits "Nov 27 / 12:00 PM" comfortably */
-  --col-date: 20.5ch;
-  /* RECORD: typical 12-3, 10-2 etc */
+  /* DATE/TIME: widened further */
+  --col-date: 22ch;
+  /* RECORD */
   --col-rec: 8ch;
-  /* SITE: fits "Neutral" */
-  --col-site: 8ch;
-  /* RESULT: fits "100-100" and also "W 100-100" */
+  /* SITE: widened further (fits "Neutral") */
+  --col-site: 9ch;
+  /* RESULT (unchanged from prior widened version) */
   --col-result: 11.5ch;
 }
 
@@ -52,7 +55,7 @@ Other behavior preserved:
 .title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Grid: opponent column is the flexible one; changing fixed widths changes available opponent width */
+/* Grid: opponent column is the flexible one */
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
