@@ -10,14 +10,14 @@
 <div class="form-check mt-3">
   <input class="form-check-input" type="checkbox" id="large_mode_checkbox">
   <label class="form-check-label" for="large_mode_checkbox">Large Mode</label>
-  <small class="form-text text-muted d-block">Preset for 13.3": Largest font + show everything.</small>
+  <small class="form-text text-muted d-block">Preset: Largest font + show everything.</small>
 </div>
 <input type="hidden" id="large_mode" name="large_mode" value="false" />
 
 <div class="form-check mt-3">
   <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
-  <label class="form-check-label" for="compact_mode_checkbox">Compact mode (7.3")</label>
-  <small class="form-text text-muted d-block">Uses the same layout/column spacing as Large Mode. Only tightens row spacing and reduces padding on 7.3". Forces Largest font.</small>
+  <label class="form-check-label" for="compact_mode_checkbox">Compact Mode</label>
+  <small class="form-text text-muted d-block">TEMPORARILY identical to Large Mode (for troubleshooting). Next step: add row tightening.</small>
 </div>
 <input type="hidden" id="compact_mode" name="compact_mode" value="false" />
 
@@ -34,7 +34,7 @@
     <option value="larger">Larger</option>
     <option value="largest">Largest</option>
   </select>
-  <small class="form-text text-muted">Large Mode and Compact Mode force Largest.</small>
+  <small class="form-text text-muted">Large/Compact modes force Largest.</small>
 </div>
 
 <input type="hidden" id="show_time" name="show_time" value="true" />
@@ -105,29 +105,20 @@
     }
   }
 
-  function applyLargeModeUi(isOn){
-    const td = document.getElementById('target_display');
+  function applyLargeOrCompact(isOn){
     if (isOn) {
-      td.value = 'pimoroni_133';
-      td.disabled = true;
       document.getElementById('font_size').value = 'largest';
-      document.getElementById('compact_mode_checkbox').checked = false;
-      syncHiddenBool('compact_mode','compact_mode_checkbox');
-    } else {
-      td.disabled = false;
-    }
-  }
+      document.getElementById('show_time_checkbox').checked = true;
+      document.getElementById('show_rank_checkbox').checked = true;
+      document.getElementById('hide_rank_checkbox').checked = false;
+      document.getElementById('hide_nickname_checkbox').checked = false;
+      document.getElementById('hide_logo_checkbox').checked = false;
 
-  function applyCompactModeUi(isOn){
-    const td = document.getElementById('target_display');
-    if (isOn) {
-      td.value = 'pimoroni_73';
-      td.disabled = true;
-      document.getElementById('font_size').value = 'largest';
-      document.getElementById('large_mode_checkbox').checked = false;
-      syncHiddenBool('large_mode','large_mode_checkbox');
-    } else {
-      td.disabled = false;
+      syncHiddenBool('show_time','show_time_checkbox');
+      syncHiddenBool('show_rank','show_rank_checkbox');
+      syncHiddenBool('hide_rank','hide_rank_checkbox');
+      syncHiddenBool('hide_nickname','hide_nickname_checkbox');
+      syncHiddenBool('hide_logo','hide_logo_checkbox');
     }
   }
 
@@ -157,19 +148,29 @@
     syncHiddenBool('hide_nickname','hide_nickname_checkbox');
     syncHiddenBool('hide_logo','hide_logo_checkbox');
 
-    applyLargeModeUi(document.getElementById('large_mode_checkbox').checked);
-    applyCompactModeUi(document.getElementById('compact_mode_checkbox').checked);
+    const apply = () => {
+      const on = document.getElementById('large_mode_checkbox').checked || document.getElementById('compact_mode_checkbox').checked;
+      applyLargeOrCompact(on);
+    }
+    apply();
 
     document.getElementById('large_mode_checkbox').addEventListener('change', () => {
       syncHiddenBool('large_mode','large_mode_checkbox');
-      applyLargeModeUi(document.getElementById('large_mode_checkbox').checked);
-      applyCompactModeUi(document.getElementById('compact_mode_checkbox').checked);
+      // keep them mutually exclusive
+      if (document.getElementById('large_mode_checkbox').checked) {
+        document.getElementById('compact_mode_checkbox').checked = false;
+        syncHiddenBool('compact_mode','compact_mode_checkbox');
+      }
+      apply();
     });
 
     document.getElementById('compact_mode_checkbox').addEventListener('change', () => {
       syncHiddenBool('compact_mode','compact_mode_checkbox');
-      applyCompactModeUi(document.getElementById('compact_mode_checkbox').checked);
-      applyLargeModeUi(document.getElementById('large_mode_checkbox').checked);
+      if (document.getElementById('compact_mode_checkbox').checked) {
+        document.getElementById('large_mode_checkbox').checked = false;
+        syncHiddenBool('large_mode','large_mode_checkbox');
+      }
+      apply();
     });
 
     document.getElementById('show_time_checkbox').addEventListener('change', () => syncHiddenBool('show_time','show_time_checkbox'));

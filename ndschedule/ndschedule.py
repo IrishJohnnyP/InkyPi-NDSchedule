@@ -20,7 +20,6 @@ PIMORONI_133 = (1600, 1200)
 
 
 def _ensure_icon_file():
-    """Ensure plugin icon exists."""
     try:
         here = Path(__file__).resolve().parent
         icon_path = here / "icon.png"
@@ -40,14 +39,11 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    Modes:
-    - Large Mode: 13.3" preset (Largest font + show everything).
-    - Compact Mode: EXACT same formatting as Large Mode (same columns/spacing in CSS),
-      but (a) forces Largest font and (b) uses compact-only CSS tweaks for 7.3":
-         * slightly reduced container padding
-         * tightened row vertical padding
+    WORKING STEP 1 (as requested):
+    - Compact Mode behaves EXACTLY like Large Mode.
+    - No target display switching; no CSS differences; both force the same preset.
 
-    Compact Mode does NOT auto-hide content; user toggles for time/nickname/logo/rank remain in effect.
+    Once this is confirmed working, we can reintroduce compact-only row tightening.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -58,39 +54,34 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
-        # User settings
-        font_size = (settings.get("font_size") or "normal").strip().lower()
-        if font_size not in ("normal", "large", "larger", "largest"):
-            font_size = "normal"
-
-        compact_mode = self._to_bool(settings.get("compact_mode", False))
+        # User toggles
         show_time = self._to_bool(settings.get("show_time", True))
         show_rank_setting = self._to_bool(settings.get("show_rank", True))
         hide_rank = self._to_bool(settings.get("hide_rank", False))
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
-        # Large Mode preset
+        # Mode switches
         large_mode = self._to_bool(settings.get("large_mode", False))
-        if large_mode:
+        compact_mode = self._to_bool(settings.get("compact_mode", False))
+
+        # STEP 1: compact == large (same preset)
+        if large_mode or compact_mode:
             font_size = "largest"
-            compact_mode = False
             show_time = True
             show_rank_setting = True
             hide_rank = False
             hide_nickname = False
             hide_logo = False
-            settings["target_display"] = "pimoroni_133"
-
-        # Compact Mode: force Largest font and 7.3" render target, but keep user's show/hide toggles
-        if compact_mode and not large_mode:
-            font_size = "largest"
-            settings["target_display"] = "pimoroni_73"
+        else:
+            font_size = (settings.get("font_size") or "normal").strip().lower()
+            if font_size not in ("normal", "large", "larger", "largest"):
+                font_size = "normal"
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Resolve dimensions
+        # Dimensions (respect target_display selection)
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -121,7 +112,6 @@ class NdSchedule(BasePlugin):
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
-        # Rankings only for current season, and only if not hidden
         effective_show_rank = bool(show_rank_setting and season_year == current_year and not hide_rank)
         rank_map: Dict[str, int] = {}
         rank_label = ""
@@ -157,7 +147,7 @@ class NdSchedule(BasePlugin):
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
     # ----------------------------
-    # Data + caching
+    # Helpers
     # ----------------------------
 
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
@@ -229,21 +219,12 @@ class NdSchedule(BasePlugin):
         except Exception:
             return {}
 
-    # ----------------------------
-    # Timezone helper
-    # ----------------------------
-
     def _eastern_tz(self):
-        """Return America/New_York tzinfo when available; otherwise None."""
         try:
             from zoneinfo import ZoneInfo
             return ZoneInfo("America/New_York")
         except Exception:
             return None
-
-    # ----------------------------
-    # Rankings
-    # ----------------------------
 
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
@@ -321,10 +302,6 @@ class NdSchedule(BasePlugin):
 
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
-
-    # ----------------------------
-    # Utilities
-    # ----------------------------
 
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
@@ -438,134 +415,104 @@ class NdSchedule(BasePlugin):
                     ties += 1
         return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
 
-    # ----------------------------
-    # Rows
-    # ----------------------------
-
-    def _build_rows(
-        self,
-        sched: Dict[str, Any],
-        rank_map: Dict[str, int],
-        show_rank: bool,
-        season_year: int,
-        ttl: int,
-        show_time: bool = True,
-    ) -> List[Dict[str, Any]]:
-        events = sched.get("events") or []
+    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
+        events = sched.get('events') or []
         if not isinstance(events, list):
             events = []
-
         rows: List[Dict[str, Any]] = []
         for ev in events:
             if not isinstance(ev, dict):
                 continue
-
-            iso_date = str(ev.get("date") or "")
+            iso_date = str(ev.get('date') or '')
             game_dt = self._parse_iso(iso_date)
-
-            comps = ev.get("competitions")
+            comps = ev.get('competitions')
             comp = comps[0] if isinstance(comps, list) and comps else ev
-
             date_disp = self._format_game_datetime(iso_date, show_time=show_time)
 
-            competitors = (comp.get("competitors") or []) if isinstance(comp, dict) else []
+            competitors = (comp.get('competitors') or []) if isinstance(comp, dict) else []
             if not isinstance(competitors, list):
                 competitors = []
-
             nd_side = opp_side = None
             for c in competitors:
                 if not isinstance(c, dict):
                     continue
-                team = c.get("team") or {}
-                if str(team.get("id")) == str(ND_TEAM_ID):
+                team = c.get('team') or {}
+                if str(team.get('id')) == str(ND_TEAM_ID):
                     nd_side = c
                 else:
                     opp_side = c
             if not nd_side or not opp_side:
                 continue
 
-            opp_team = opp_side.get("team") or {}
-            opp_id = str(opp_team.get("id") or "")
+            opp_team = opp_side.get('team') or {}
+            opp_id = str(opp_team.get('id') or '')
             opp_meta = self._get_team_meta(int(opp_id), ttl) if opp_id.isdigit() else {}
-
             school = self._choose_school(opp_team, opp_meta)
             nickname = self._nickname_v22(opp_meta if opp_meta else opp_team, school)
 
-            logo = ""
-            logos = opp_team.get("logos")
+            logo = ''
+            logos = opp_team.get('logos')
             if isinstance(logos, list):
                 for item in logos:
-                    if isinstance(item, dict) and item.get("href"):
-                        logo = item["href"]
+                    if isinstance(item, dict) and item.get('href'):
+                        logo = item['href']
                         break
             if not logo:
-                logo = str(opp_team.get("logo") or "")
+                logo = str(opp_team.get('logo') or '')
 
             rk = rank_map.get(opp_id) if show_rank else None
+            opp_record = self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl) if (opp_id.isdigit() and game_dt) else ''
 
-            opp_record = (
-                self._opponent_pregame_record(int(opp_id), season_year, game_dt, ttl)
-                if (opp_id.isdigit() and game_dt)
-                else ""
-            )
+            ha = str(nd_side.get('homeAway') or '').lower()
+            neutral = bool(comp.get('neutralSite')) if isinstance(comp, dict) else False
+            site = 'Neutral' if neutral else ('Home' if ha == 'home' else ('Away' if ha == 'away' else ''))
 
-            ha = str(nd_side.get("homeAway") or "").lower()
-            neutral = bool(comp.get("neutralSite")) if isinstance(comp, dict) else False
-            site = "Neutral" if neutral else ("Home" if ha == "home" else ("Away" if ha == "away" else ""))
+            nd_score = self._safe_int(nd_side.get('score'))
+            opp_score = self._safe_int(opp_side.get('score'))
+            has_winner_flag = isinstance(nd_side.get('winner'), bool) or isinstance(opp_side.get('winner'), bool)
 
-            nd_score = self._safe_int(nd_side.get("score"))
-            opp_score = self._safe_int(opp_side.get("score"))
-            has_winner_flag = isinstance(nd_side.get("winner"), bool) or isinstance(opp_side.get("winner"), bool)
-
-            result = ""
-            result_class = ""
+            result = ''
+            result_class = ''
             if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
                 if nd_score > opp_score:
                     result = f"W {nd_score}-{opp_score}"
-                    result_class = "win"
+                    result_class = 'win'
                 elif nd_score < opp_score:
                     result = f"L {nd_score}-{opp_score}"
-                    result_class = "lose"
+                    result_class = 'lose'
                 else:
                     result = f"T {nd_score}-{opp_score}"
-                    result_class = "tie"
+                    result_class = 'tie'
 
-            rows.append(
-                {
-                    "date": date_disp,
-                    "site": site,
-                    "opp_rank": rk,
-                    "logo": logo,
-                    "opp_school": school,
-                    "opp_nickname": nickname,
-                    "opp_record": opp_record,
-                    "result": result,
-                    "result_class": result_class,
-                }
-            )
-
+            rows.append({
+                'date': date_disp,
+                'site': site,
+                'opp_rank': rk,
+                'logo': logo,
+                'opp_school': school,
+                'opp_nickname': nickname,
+                'opp_record': opp_record,
+                'result': result,
+                'result_class': result_class,
+            })
         return rows
 
-    # ----------------------------
-    # Formatting
-    # ----------------------------
-
-    def _format_game_datetime(self, iso_str: str, show_time: bool = True) -> str:
+    def _format_game_datetime(self, iso_str: str, show_time: bool=True) -> str:
         from datetime import datetime, timezone
         if not iso_str:
-            return "TBD"
+            return 'TBD'
         tzinfo = self._eastern_tz()
         try:
-            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime("%b %d")
+            date_part = dt_local.strftime('%b %d')
             if not show_time:
                 return date_part
-            hour = dt_local.strftime("%I").lstrip("0") or "12"
-            minute = dt_local.strftime("%M")
-            ampm = dt_local.strftime("%p")
+            hour = dt_local.strftime('%I').lstrip('0') or '12'
+            minute = dt_local.strftime('%M')
+            ampm = dt_local.strftime('%p')
             return f"{date_part} / {hour}:{minute} {ampm}"
         except Exception:
             return iso_str[:10]
@@ -573,49 +520,49 @@ class NdSchedule(BasePlugin):
     def _format_iso_datetime(self, iso_str: str) -> str:
         from datetime import datetime, timezone
         if not iso_str:
-            return ""
+            return ''
         tzinfo = self._eastern_tz()
         try:
-            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime("%b %d, %Y")
-            hour = dt_local.strftime("%I").lstrip("0") or "12"
-            minute = dt_local.strftime("%M")
-            ampm = dt_local.strftime("%p")
+            date_part = dt_local.strftime('%b %d, %Y')
+            hour = dt_local.strftime('%I').lstrip('0') or '12'
+            minute = dt_local.strftime('%M')
+            ampm = dt_local.strftime('%p')
             return f"{date_part} {hour}:{minute} {ampm}"
         except Exception:
             return iso_str
 
     def _format_updated(self, data: Dict[str, Any]) -> str:
         date_str = None
-        for k in ("timestamp", "lastUpdated", "date", "updateDate"):
+        for k in ('timestamp','lastUpdated','date','updateDate'):
             v = data.get(k)
             if v:
                 date_str = str(v)
                 break
         if not date_str:
-            return ""
+            return ''
         from datetime import datetime, timezone
         tzinfo = self._eastern_tz()
         try:
             if date_str.isdigit() and len(date_str) >= 12:
-                dt = datetime.fromtimestamp(int(date_str) / 1000, tz=timezone.utc)
+                dt = datetime.fromtimestamp(int(date_str)/1000, tz=timezone.utc)
             elif date_str.isdigit():
                 dt = datetime.fromtimestamp(int(date_str), tz=timezone.utc)
             else:
-                dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime("%b %d, %Y")
-            hour = dt_local.strftime("%I").lstrip("0") or "12"
-            minute = dt_local.strftime("%M")
-            ampm = dt_local.strftime("%p")
+            date_part = dt_local.strftime('%b %d, %Y')
+            hour = dt_local.strftime('%I').lstrip('0') or '12'
+            minute = dt_local.strftime('%M')
+            ampm = dt_local.strftime('%p')
             return f"{date_part} {hour}:{minute} {ampm}"
         except Exception:
-            return ""
+            return ''
 
     def _to_bool(self, v: Any) -> bool:
         if isinstance(v, bool):
@@ -626,9 +573,9 @@ class NdSchedule(BasePlugin):
             v = v[-1]
         if isinstance(v, str):
             s = v.strip().lower()
-            if s in ("1", "true", "yes", "on", "checked"):
+            if s in ('1','true','yes','on','checked'):
                 return True
-            if s in ("0", "false", "no", "off", ""):
+            if s in ('0','false','no','off',''):
                 return False
             return True
         return bool(v)
