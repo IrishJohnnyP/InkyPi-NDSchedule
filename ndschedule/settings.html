@@ -1,9 +1,8 @@
-<!-- NdSchedule settings (robust checkbox persistence)
+<!-- NdSchedule settings – persistence-first, minimal JS.
 
-Key change:
-- Each checkbox now has a proper name= setting key.
-- A hidden input of the same name is included first to ensure "false" is submitted when unchecked.
-- This makes selections persist even if JavaScript fails.
+IMPORTANT:
+- Each checkbox has name=<key> and a hidden input with the same name set to false.
+- This ensures the selection is submitted and persists.
 -->
 
 <div class="form-group">
@@ -15,20 +14,16 @@ Key change:
   </select>
 </div>
 
-<!-- Large Mode -->
 <input type="hidden" name="large_mode" value="false" />
 <div class="form-check mt-3">
-  <input class="form-check-input" type="checkbox" id="large_mode_checkbox" name="large_mode" value="true">
-  <label class="form-check-label" for="large_mode_checkbox">Large Mode</label>
-  <small class="form-text text-muted d-block">Preset: Largest font + show everything.</small>
+  <input class="form-check-input" type="checkbox" id="large_mode" name="large_mode" value="true">
+  <label class="form-check-label" for="large_mode">Large Mode</label>
 </div>
 
-<!-- Compact Mode -->
 <input type="hidden" name="compact_mode" value="false" />
-<div class="form-check mt-3">
-  <input class="form-check-input" type="checkbox" id="compact_mode_checkbox" name="compact_mode" value="true">
-  <label class="form-check-label" for="compact_mode_checkbox">Compact Mode</label>
-  <small class="form-text text-muted d-block">(Currently) same preset as Large Mode. We will adjust layout next.</small>
+<div class="form-check mt-2">
+  <input class="form-check-input" type="checkbox" id="compact_mode" name="compact_mode" value="true">
+  <label class="form-check-label" for="compact_mode">Compact Mode</label>
 </div>
 
 <div class="form-group mt-3">
@@ -44,42 +39,36 @@ Key change:
     <option value="larger">Larger</option>
     <option value="largest">Largest</option>
   </select>
-  <small class="form-text text-muted">Large/Compact modes force Largest.</small>
 </div>
 
-<!-- Show time -->
 <input type="hidden" name="show_time" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="show_time_checkbox" name="show_time" value="true">
-  <label class="form-check-label" for="show_time_checkbox">Show game time</label>
+  <input class="form-check-input" type="checkbox" id="show_time" name="show_time" value="true">
+  <label class="form-check-label" for="show_time">Show game time</label>
 </div>
 
-<!-- Show rank -->
 <input type="hidden" name="show_rank" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="show_rank_checkbox" name="show_rank" value="true">
-  <label class="form-check-label" for="show_rank_checkbox">Show opponent rank</label>
+  <input class="form-check-input" type="checkbox" id="show_rank" name="show_rank" value="true">
+  <label class="form-check-label" for="show_rank">Show opponent rank</label>
 </div>
 
-<!-- Hide rank -->
 <input type="hidden" name="hide_rank" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_rank_checkbox" name="hide_rank" value="true">
-  <label class="form-check-label" for="hide_rank_checkbox">Hide rank in list</label>
+  <input class="form-check-input" type="checkbox" id="hide_rank" name="hide_rank" value="true">
+  <label class="form-check-label" for="hide_rank">Hide rank in list</label>
 </div>
 
-<!-- Hide nickname -->
 <input type="hidden" name="hide_nickname" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_nickname_checkbox" name="hide_nickname" value="true">
-  <label class="form-check-label" for="hide_nickname_checkbox">Hide nickname in list</label>
+  <input class="form-check-input" type="checkbox" id="hide_nickname" name="hide_nickname" value="true">
+  <label class="form-check-label" for="hide_nickname">Hide nickname in list</label>
 </div>
 
-<!-- Hide logo -->
 <input type="hidden" name="hide_logo" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_logo_checkbox" name="hide_logo" value="true">
-  <label class="form-check-label" for="hide_logo_checkbox">Hide opponent logo</label>
+  <input class="form-check-input" type="checkbox" id="hide_logo" name="hide_logo" value="true">
+  <label class="form-check-label" for="hide_logo">Hide opponent logo</label>
 </div>
 
 <div class="form-group mt-3">
@@ -114,51 +103,24 @@ Key change:
     }
   }
 
-  // Optional UI nicety: keep Large and Compact mutually exclusive.
-  function enforceExclusive() {
-    const large = document.getElementById('large_mode_checkbox');
-    const compact = document.getElementById('compact_mode_checkbox');
-    if (!large || !compact) return;
-
-    large.addEventListener('change', () => {
-      if (large.checked) compact.checked = false;
-      // Also force font size dropdown visually
-      if (large.checked) document.getElementById('font_size').value = 'largest';
-    });
-
-    compact.addEventListener('change', () => {
-      if (compact.checked) large.checked = false;
-      if (compact.checked) document.getElementById('font_size').value = 'largest';
-    });
-  }
-
   document.addEventListener('DOMContentLoaded', () => {
     populateYears();
-
-    // If the host injects pluginSettings, use it to populate controls.
     const ps = (typeof pluginSettings !== 'undefined') ? pluginSettings : {};
 
-    const setVal = (id, val) => { const el=document.getElementById(id); if(el) el.value = (val ?? el.value); };
+    const setVal = (id, val) => { const el=document.getElementById(id); if(el && val !== undefined) el.value = val; };
     const setChk = (id, val) => { const el=document.getElementById(id); if(el) el.checked = toBool(val, el.checked); };
 
     setVal('target_display', ps.target_display || 'auto');
     setVal('season_year', ps.season_year || '');
     setVal('font_size', ps.font_size || 'normal');
-    setVal('cache_minutes', (ps.cache_minutes ?? 30));
+    setVal('cache_minutes', ps.cache_minutes ?? 30);
 
-    setChk('large_mode_checkbox', ps.large_mode);
-    setChk('compact_mode_checkbox', ps.compact_mode);
-    setChk('show_time_checkbox', ps.show_time ?? true);
-    setChk('show_rank_checkbox', ps.show_rank ?? true);
-    setChk('hide_rank_checkbox', ps.hide_rank);
-    setChk('hide_nickname_checkbox', ps.hide_nickname);
-    setChk('hide_logo_checkbox', ps.hide_logo);
-
-    // If Large/Compact checked, show dropdown as Largest
-    if (document.getElementById('large_mode_checkbox').checked || document.getElementById('compact_mode_checkbox').checked) {
-      document.getElementById('font_size').value = 'largest';
-    }
-
-    enforceExclusive();
+    setChk('large_mode', ps.large_mode);
+    setChk('compact_mode', ps.compact_mode);
+    setChk('show_time', ps.show_time ?? true);
+    setChk('show_rank', ps.show_rank ?? true);
+    setChk('hide_rank', ps.hide_rank);
+    setChk('hide_nickname', ps.hide_nickname);
+    setChk('hide_logo', ps.hide_logo);
   });
 </script>
