@@ -20,7 +20,6 @@ PIMORONI_133 = (1600, 1200)
 
 
 def _ensure_icon_file():
-    """Ensure the plugin icon exists."""
     try:
         here = Path(__file__).resolve().parent
         icon_path = here / "icon.png"
@@ -40,10 +39,13 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    Fix version:
-    - Restores missing _build_rows() method (error: object has no attribute _build_rows).
-    - Compact mode forces Largest font and keeps identical column spacing to Large Mode.
-    - Compact mode auto-switches render target to 7.3" (800×480) and relies on CSS for padding/row spacing.
+    This drop-in restores missing helper methods:
+    - _build_rows
+    - _eastern_tz
+
+    And keeps behavior:
+    - Large Mode forces largest font + show everything and target 13.3
+    - Compact Mode forces largest font, keeps user show/hide toggles, and targets 7.3
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -54,7 +56,6 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
-        # User settings
         font_size = (settings.get("font_size") or "normal").strip().lower()
         if font_size not in ("normal", "large", "larger", "largest"):
             font_size = "normal"
@@ -66,7 +67,6 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
-        # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
             font_size = "largest"
@@ -78,7 +78,6 @@ class NdSchedule(BasePlugin):
             hide_logo = False
             settings["target_display"] = "pimoroni_133"
 
-        # Compact Mode: force largest font + 7.3" target, keep user's show/hide toggles
         if compact_mode and not large_mode:
             font_size = "largest"
             settings["target_display"] = "pimoroni_73"
@@ -86,7 +85,6 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Resolve dimensions
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -105,7 +103,6 @@ class NdSchedule(BasePlugin):
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
 
-        # Season year
         current_year = self._detect_current_season_year(ttl)
         selected = settings.get("season_year")
         try:
@@ -113,11 +110,9 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
-        # Fetch schedule + logo
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
-        # Rankings only for current season, and only if not hidden
         effective_show_rank = bool(show_rank_setting and season_year == current_year and not hide_rank)
         rank_map: Dict[str, int] = {}
         rank_label = ""
@@ -228,6 +223,18 @@ class NdSchedule(BasePlugin):
             return {}
 
     # ----------------------------
+    # Timezone helper (this was missing)
+    # ----------------------------
+
+    def _eastern_tz(self):
+        """Return America/New_York tzinfo when available; otherwise None."""
+        try:
+            from zoneinfo import ZoneInfo
+            return ZoneInfo("America/New_York")
+        except Exception:
+            return None
+
+    # ----------------------------
     # Rankings
     # ----------------------------
 
@@ -309,7 +316,123 @@ class NdSchedule(BasePlugin):
         return rank_map, label, updated_fmt
 
     # ----------------------------
-    # Row building (this was missing)
+    # Utilities
+    # ----------------------------
+
+    def _safe_int(self, v: Any) -> Optional[int]:
+        try:
+            if v is None:
+                return None
+            if isinstance(v, (int, float)):
+                return int(v)
+            if isinstance(v, dict):
+                for k in ("value", "displayValue", "score"):
+                    if v.get(k) is not None:
+                        return self._safe_int(v.get(k))
+                return None
+            if isinstance(v, list) and v:
+                return self._safe_int(v[0])
+            if isinstance(v, str):
+                s = v.strip()
+                if not s:
+                    return None
+                if s.isdigit() or (s.startswith("-") and s[1:].isdigit()):
+                    return int(s)
+                return int(float(s))
+        except Exception:
+            return None
+        return None
+
+    def _parse_iso(self, iso_str: str):
+        from datetime import datetime
+        if not iso_str:
+            return None
+        try:
+            return datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        except Exception:
+            return None
+
+    def _is_finalish(self, comp: Dict[str, Any]) -> bool:
+        if not isinstance(comp, dict):
+            return False
+        st = (comp.get("status") or {}).get("type") or {}
+        if isinstance(st, dict):
+            if st.get("completed") is True:
+                return True
+            if str(st.get("state") or "").lower() == "post":
+                return True
+        return str(comp.get("status") or "").lower() in ("final", "post")
+
+    def _choose_school(self, team: Dict[str, Any], meta: Dict[str, Any]) -> str:
+        for c in (
+            team.get("shortDisplayName"), team.get("location"), team.get("displayName"), team.get("abbreviation"),
+            meta.get("shortDisplayName"), meta.get("location"), meta.get("displayName"), meta.get("abbreviation"),
+            team.get("name"), meta.get("name"),
+        ):
+            if isinstance(c, str) and c.strip():
+                return c.strip()
+        return "Unknown"
+
+    def _nickname_v22(self, team: Dict[str, Any], school: str) -> str:
+        nickname = (team.get("name") or team.get("nickname") or "").strip()
+        if nickname and nickname.lower() not in str(school).lower():
+            return nickname
+        return ""
+
+    def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
+        if not opp_team_id or not game_dt_utc:
+            return ""
+        opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
+        events = opp_sched.get("events") or []
+        if not isinstance(events, list):
+            return ""
+        wins = losses = ties = 0
+        for ev in events:
+            if not isinstance(ev, dict):
+                continue
+            ev_dt = self._parse_iso(str(ev.get("date") or ""))
+            if not ev_dt or ev_dt >= game_dt_utc:
+                continue
+            comps = ev.get("competitions")
+            comp = comps[0] if isinstance(comps, list) and comps else ev
+            if not isinstance(comp, dict):
+                continue
+            competitors = comp.get("competitors") or []
+            if not isinstance(competitors, list) or len(competitors) < 2:
+                continue
+            my_side = other_side = None
+            for c in competitors:
+                if not isinstance(c, dict):
+                    continue
+                team = c.get("team") or {}
+                if str(team.get("id")) == str(opp_team_id):
+                    my_side = c
+                else:
+                    other_side = c
+            if not my_side or not other_side:
+                continue
+            my_score = self._safe_int(my_side.get("score"))
+            other_score = self._safe_int(other_side.get("score"))
+            winner_flag = my_side.get("winner")
+            if my_score is None or other_score is None:
+                if isinstance(winner_flag, bool):
+                    wins += 1 if winner_flag else 0
+                    losses += 0 if winner_flag else 1
+                continue
+            if isinstance(winner_flag, bool):
+                wins += 1 if winner_flag else 0
+                losses += 0 if winner_flag else 1
+            else:
+                if my_score > other_score:
+                    wins += 1
+                elif my_score < other_score:
+                    losses += 1
+                else:
+                    ties += 1
+        return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
+
+    # ----------------------------
+    # Rows
     # ----------------------------
 
     def _build_rows(
