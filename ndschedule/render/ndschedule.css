@@ -1,22 +1,80 @@
 
-/* --- Tight Rows Option for 800x480 (activate by enabling Compact mode) ---
-   Applies ONLY when container has both: .display-800 and .compact
-   Notes:
-   - Columns are unchanged; this strictly tightens vertical spacing.
-   - Works with the archive's existing class structure.
+/* NdSchedule CSS – 13.3" ONLY (drop-in replacement)
+   - Removes any 7.3" rules
+   - Preserves baseline 13.3" layout
+   - Adds optional tighter rows when `.compact` is enabled on 13.3"
 */
 
-/* Header spacing tightened */
-.nd-container.display-800.compact .header{ margin-bottom: 0.8dvh; gap: 0.45dvh; }
+.nd-container{
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  padding:3dvh 3dvw; /* base padding */
+  font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-weight:600;
+  color: inherit;
+  /* Base scales */
+  --scale: 1.08;
+  --title-scale: 1.06;
+  /* 13.3" column widths */
+  --col-date: 33.5ch;
+  --col-rec: 8ch;
+  --col-site: 11ch;
+  --col-result: 13.25ch;
+}
 
-/* Row padding tightened so more rows fit vertically */
-.nd-container.display-800.compact .row{ padding: 0.18dvh 0; }
+/* 13.3" panel padding */
+.nd-container.display-1600{ padding:3.6dvh 3.8dvw; }
 
-/* Keep column gap modest but readable */
-.nd-container.display-800.compact .colhdr,
-.nd-container.display-800.compact .row{ column-gap: 1.05dvw; }
+/* Font size presets */
+.font-normal { --scale:1.08; --title-scale:1.06; }
+.font-large  { --scale:1.18; --title-scale:1.12; }
+.font-larger { --scale:1.30; --title-scale:1.20; }
+.font-largest{ --scale:1.44; --title-scale:1.30; }
 
-/* Slightly reduce the update-line footprint without changing columns */
-.nd-container.display-800.compact .update-line{ font-size: calc(min(1.60dvh,1.60dvw) * var(--scale)); }
+/* Header */
+.header{display:flex;flex-direction:column;gap:0.6dvh;margin-bottom:1.8dvh;}
+.titlewrap{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
+.title-logo{width:calc(min(3.2dvh,3.2dvw) * var(--scale));height:calc(min(3.2dvh,3.2dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Preserve base column widths; DO NOT touch --col-* here. */
+/* Grid */
+.colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
+.colhdr{padding:0.30dvh 0 0.26dvh 0;}
+.colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
+.colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
+.sep{height:1px;background: currentColor;width:100%;opacity:.22;}
+.row{padding:0.52dvh 0;}
+
+/* Cells */
+.date{font-weight:760;font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.opp{display:flex;align-items:center;gap:1.0dvw;min-width:0;}
+.rank{font-weight:900;font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));width:3.5ch;flex:0 0 auto;}
+.logo{width:calc(min(3.0dvh,3.0dvw) * var(--scale));height:calc(min(3.0dvh,3.0dvw) * var(--scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.school{font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.nickname{font-size:calc(min(1.85dvh,1.85dvw) * var(--scale));font-weight:650;opacity:.85;margin-left:.35em;white-space:nowrap;}
+.rec,.site,.result{font-size:calc(min(1.85dvh,1.85dvw) * var(--scale));font-weight:750;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.rec{text-align:center;}
+.site{text-align:center;}
+.result{text-align:right;font-weight:950;}
+
+/* Win/Loss colors */
+.result.win{ color: rgb(0,255,0); }
+.result.lose{ color: rgb(255,0,0); }
+
+/* Footnote */
+.footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
+
+/* Compact mode – 13.3" ONLY: tighten rows to avoid top cutoff */
+.nd-container.display-1600.compact .header{ margin-bottom: 1.0dvh; gap: 0.50dvh; }
+.nd-container.display-1600.compact .row{ padding: 0.30dvh 0; }
+.nd-container.display-1600.compact .colhdr,
+.nd-container.display-1600.compact .row{ column-gap: 1.25dvw; }
+.nd-container.display-1600.compact .update-line{ font-size: calc(min(1.65dvh,1.65dvw) * var(--scale)); }
+
+/* Responsive (generic) */
+@media (max-aspect-ratio:1){
+  .nd-container{padding:4dvh 4dvw;}
+  .compact{padding:3dvh 3.5dvw;}
+}
