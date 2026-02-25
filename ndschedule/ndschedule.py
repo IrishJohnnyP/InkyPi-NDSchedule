@@ -38,12 +38,9 @@ _ensure_icon_file()
 
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
-
-    - Large Mode: preset for 13.3" (Largest font + show everything).
-    - Compact Mode: uses the SAME user show/hide settings; only enables compact layout
-      and auto-switches the render target to 7.3".
-
-    HTML/CSS handle layout. This module provides data + template params.
+    - Large Mode (13.3"): preset for largest font + show everything
+    - Compact Mode (7.3"): same user toggles; compact spacing & 7.3" target
+    HTML/CSS handle layout; this module provides data + template params.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -58,7 +55,6 @@ class NdSchedule(BasePlugin):
         font_size = (settings.get("font_size") or "normal").strip().lower()
         if font_size not in ("normal", "large", "larger", "largest"):
             font_size = "normal"
-
         compact_mode = self._to_bool(settings.get("compact_mode", False))
         show_time = self._to_bool(settings.get("show_time", True))
         show_rank_setting = self._to_bool(settings.get("show_rank", True))
@@ -78,7 +74,7 @@ class NdSchedule(BasePlugin):
             hide_logo = False
             settings["target_display"] = "pimoroni_133"
 
-        # Compact Mode: keep user toggles; just render at 7.3" and set compact_mode True
+        # Compact Mode: set target to 7.3"
         if compact_mode and not large_mode:
             settings["target_display"] = "pimoroni_73"
 
@@ -100,9 +96,11 @@ class NdSchedule(BasePlugin):
                 display_class = "display-800"
             elif tuple(dims) == PIMORONI_133:
                 display_class = "display-1600"
-
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
+
+        # Small display flag for 7.3" tuning
+        is_73 = (display_class == "display-800")
 
         # Season year
         current_year = self._detect_current_season_year(ttl)
@@ -123,7 +121,10 @@ class NdSchedule(BasePlugin):
         if effective_show_rank:
             rank_map, rank_label, rank_updated = self._get_rank_map(ttl)
 
-        rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl, show_time=show_time)
+        rows = self._build_rows(
+            sched, rank_map, effective_show_rank, season_year, ttl,
+            show_time=show_time, compact_date=is_73
+        )
 
         if effective_show_rank and rank_label:
             update_line = (
@@ -147,13 +148,11 @@ class NdSchedule(BasePlugin):
             "display_class": display_class,
             "plugin_settings": settings,
         }
-
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
     # ----------------------------
     # HTTP + caching
     # ----------------------------
-
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time()
         ts = self._cache["ts"].get(url, 0.0)
@@ -226,7 +225,6 @@ class NdSchedule(BasePlugin):
     # ----------------------------
     # Utilities
     # ----------------------------
-
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
             if v is None:
@@ -424,11 +422,11 @@ class NdSchedule(BasePlugin):
                     rank_map[str(tid)] = int(rk)
             except Exception:
                 pass
-
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
 
-    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
+    def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool,
+                    season_year: int, ttl: int, show_time: bool = True, compact_date: bool = False) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list):
             events = []
@@ -440,12 +438,12 @@ class NdSchedule(BasePlugin):
             game_dt = self._parse_iso(iso_date)
             comps = ev.get("competitions")
             comp = comps[0] if isinstance(comps, list) and comps else ev
-            date_disp = self._format_game_datetime(iso_date, show_time=show_time)
+
+            date_disp = self._format_game_datetime(iso_date, show_time=show_time, compact_date=compact_date)
 
             competitors = (comp.get("competitors") or []) if isinstance(comp, dict) else []
             if not isinstance(competitors, list):
                 competitors = []
-
             nd_side = opp_side = None
             for c in competitors:
                 if not isinstance(c, dict):
@@ -484,7 +482,6 @@ class NdSchedule(BasePlugin):
             nd_score = self._safe_int(nd_side.get("score"))
             opp_score = self._safe_int(opp_side.get("score"))
             has_winner_flag = isinstance(nd_side.get("winner"), bool) or isinstance(opp_side.get("winner"), bool)
-
             result = ""
             result_class = ""
             if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
@@ -511,7 +508,7 @@ class NdSchedule(BasePlugin):
             })
         return rows
 
-    def _format_game_datetime(self, iso_str: str, show_time: bool=True) -> str:
+    def _format_game_datetime(self, iso_str: str, show_time: bool = True, compact_date: bool = False) -> str:
         from datetime import datetime, timezone
         if not iso_str:
             return "TBD"
@@ -521,13 +518,62 @@ class NdSchedule(BasePlugin):
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
+
+            # Default pattern (13.3"): "Nov 27 / 12:00 PM"
+            def fmt_default():
+                date_part = dt_local.strftime("%b %d")
+                if not show_time:
+                    return date_part
+                hour = dt_local.strftime("%I").lstrip("0") or "12"
+                minute = dt_local.strftime("%M")
+                ampm = dt_local.strftime("%p")
+                return f"{date_part} / {hour}:{minute} {ampm}"
+
+            if not compact_date:
+                return fmt_default()
+
+            # ---- Auto-fit for 7.3" ----
+            # We try progressively shorter patterns until <= ~17 chars (the 16.75ch column).
+            # Note: ch isn't exact for proportional fonts, but length is a reasonable proxy.
+            candidates = []
+
+            # 1) Slightly shorter: remove slash
             date_part = dt_local.strftime("%b %d")
-            if not show_time:
-                return date_part
-            hour = dt_local.strftime("%I").lstrip("0") or "12"
-            minute = dt_local.strftime("%M")
-            ampm = dt_local.strftime("%p")
-            return f"{date_part} / {hour}:{minute} {ampm}"
+            if show_time:
+                hour = dt_local.strftime("%I").lstrip("0") or "12"
+                minute = dt_local.strftime("%M")
+                ampm = dt_local.strftime("%p")
+                candidates.append(f"{date_part} {hour}:{minute} {ampm}")
+            else:
+                candidates.append(f"{date_part}")
+
+            # 2) Compact AM/PM (lowercase, no space)
+            if show_time:
+                ampm_c = dt_local.strftime("%p").lower()[0]  # 'a' or 'p'
+                candidates.append(f"{date_part} {hour}:{minute}{ampm_c}")
+
+            # 3) Numeric date
+            m = dt_local.month
+            d = dt_local.day
+            date_num = f"{m}/{d}"
+            if show_time:
+                candidates.append(f"{date_num} {hour}:{minute}{ampm_c}")
+
+            # 4) If minutes are :00, drop them
+            if show_time and minute == "00":
+                candidates.append(f"{date_num} {hour}{ampm_c}")
+
+            # 5) Last resort: shortest form with single space
+            if show_time:
+                candidates.append(f"{m}/{d} {hour}{ampm_c}")
+
+            # First acceptable under threshold; else fallback to shortest
+            threshold = 17
+            for c in candidates:
+                if len(c) <= threshold:
+                    return c
+            return min(candidates, key=len) if candidates else fmt_default()
+
         except Exception:
             return iso_str[:10]
 
