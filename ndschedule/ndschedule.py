@@ -40,9 +40,6 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule (Large Mode ONLY).
 
-    This version removes all mode/formatting toggles and always renders using
-    the previously working Large Mode layout.
-
     Kept settings (Option A):
       - target_display (auto / 7.3" / 13.3")
       - season_year (optional)
@@ -53,6 +50,10 @@ class NdSchedule(BasePlugin):
       - Show game time
       - Show opponent rank (only for current season when a poll is available)
       - Show nickname, logo, record
+
+    IMPORTANT FIX:
+      - Always pass template param 'plugin_settings' because the base plugin template
+        expects it when rendering (prevents: 'plugin_settings' is undefined).
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -144,6 +145,7 @@ class NdSchedule(BasePlugin):
             "hide_nickname": hide_nickname,
             "hide_logo": hide_logo,
             "display_class": display_class,
+            "plugin_settings": settings,  # required by base template
         }
 
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
