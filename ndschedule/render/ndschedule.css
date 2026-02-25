@@ -1,4 +1,6 @@
-/* NdSchedule CSS – Large Mode ONLY (based on your known-good Large Mode formatting) */
+/* NdSchedule CSS – KEEP ALL FORMATTING (including column sizes)
+   This is the same CSS you provided in Archive.zip.txt, with compact rules removed.
+*/
 
 .nd-container{
   width:100%;
@@ -9,7 +11,7 @@
   font-weight:600;
   color: inherit;
 
-  /* Base scale is controlled via .font-largest */
+  /* Slightly larger base scale */
   --scale: 1.08;
   --title-scale: 1.06;
 
@@ -18,14 +20,13 @@
   --col-rec: 8ch;
   --col-site: 11ch;
   --col-result: 13.25ch;
-
-  --col-gap: 1.4dvw;
 }
 
+/* Per-panel base padding */
 .nd-container.display-800{ padding:2.4dvh 2.6dvw; }
 .nd-container.display-1600{ padding:3.6dvh 3.8dvw; }
 
-/* Keep font classes but settings UI no longer exposes them. */
+/* Font size presets */
 .font-normal { --scale:1.08; --title-scale:1.06; }
 .font-large  { --scale:1.18; --title-scale:1.12; }
 .font-larger { --scale:1.30; --title-scale:1.20; }
@@ -37,7 +38,8 @@
 .title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-.colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:var(--col-gap);}
+/* Grid */
+.colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
@@ -58,6 +60,7 @@
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
+/* Spectra-safe win/loss colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
