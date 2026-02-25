@@ -1,9 +1,6 @@
 {% extends "plugin.html" %}
 {% block content %}
-{% set n = rows|length %}
-{% set rows_class = 'rows-' ~ n %}
-
-<div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %} {{ display_class }} {{ rows_class }}">
+<div class="nd-container font-{{ font_size }}{% if compact_mode %} compact{% endif %} {{ display_class }}">
   <div class="header">
     <div class="titlewrap">
       {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="Notre Dame logo"/>{% endif %}
