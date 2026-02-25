@@ -39,13 +39,13 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    FIX: restore reliable formatting for both Large Mode and Compact Mode.
+    Restores the last-known-good Large Mode behavior:
+    - Large Mode forces Largest font + show everything.
 
-    - Settings are read directly (name/value) and converted via _to_bool.
-    - No mode-specific layout changes in Python.
-    - Both modes simply pass flags to the template.
+    Compact Mode:
+    - does NOT force show/hide toggles; it only enables the compact CSS class.
 
-    NOTE: This file includes _build_rows and _eastern_tz to avoid missing-method errors.
+    Includes all helper methods to avoid missing-attribute errors.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -56,24 +56,23 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
-        # Basic settings
+        # Read base settings
         font_size = (settings.get("font_size") or "normal").strip().lower()
         if font_size not in ("normal", "large", "larger", "largest"):
             font_size = "normal"
 
-        large_mode = self._to_bool(settings.get("large_mode", False))
         compact_mode = self._to_bool(settings.get("compact_mode", False))
-
         show_time = self._to_bool(settings.get("show_time", True))
         show_rank_setting = self._to_bool(settings.get("show_rank", True))
         hide_rank = self._to_bool(settings.get("hide_rank", False))
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
-        # For now: both Large + Compact apply the same 'largest + show everything' preset.
-        # (This ensures formatting works; we can reintroduce differences after verification.)
-        if large_mode or compact_mode:
+        # Large mode preset (last known good)
+        large_mode = self._to_bool(settings.get("large_mode", False))
+        if large_mode:
             font_size = "largest"
+            compact_mode = False
             show_time = True
             show_rank_setting = True
             hide_rank = False
@@ -83,7 +82,7 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Determine display_class
+        # Resolve dimensions
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -227,6 +226,10 @@ class NdSchedule(BasePlugin):
         except Exception:
             return None
 
+    # ----------------------------
+    # Rankings
+    # ----------------------------
+
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
         polls = data.get("rankings")
@@ -303,6 +306,10 @@ class NdSchedule(BasePlugin):
 
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
+
+    # ----------------------------
+    # Utilities
+    # ----------------------------
 
     def _safe_int(self, v: Any) -> Optional[int]:
         try:

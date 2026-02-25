@@ -1,8 +1,6 @@
-<!-- NdSchedule settings – persistence-first, minimal JS.
+<!-- NdSchedule settings (persistent checkboxes)
 
-IMPORTANT:
-- Each checkbox has name=<key> and a hidden input with the same name set to false.
-- This ensures the selection is submitted and persists.
+Fix: checkboxes now submit and persist via name= plus a hidden false input.
 -->
 
 <div class="form-group">
@@ -85,7 +83,6 @@ IMPORTANT:
     if (['0','false','no','off',''].includes(s)) return false;
     return fallback;
   }
-
   function populateYears() {
     const sel = document.getElementById('season_year');
     if (!sel) return;
@@ -102,11 +99,9 @@ IMPORTANT:
       sel.appendChild(o);
     }
   }
-
   document.addEventListener('DOMContentLoaded', () => {
     populateYears();
     const ps = (typeof pluginSettings !== 'undefined') ? pluginSettings : {};
-
     const setVal = (id, val) => { const el=document.getElementById(id); if(el && val !== undefined) el.value = val; };
     const setChk = (id, val) => { const el=document.getElementById(id); if(el) el.checked = toBool(val, el.checked); };
 
