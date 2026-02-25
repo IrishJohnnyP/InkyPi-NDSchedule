@@ -1,5 +1,15 @@
-/* NdSchedule CSS – KEEP ALL FORMATTING (including column sizes)
-   This is the same CSS you provided in Archive.zip.txt, with compact rules removed.
+/* NdSchedule CSS – COMPLETE
+
+- Spectra 6 friendly win/loss colors
+- Theme background show-through (no html/body, no background paint)
+- Column widths tuned to fit:
+    DATE/TIME: "Nov 27 / 12:00 PM" (no AM/PM truncation)
+    SITE: "Neutral"
+    RESULT: accommodates long scores (e.g., "W 100-100")
+- Compact Mode (7.3"):
+    * ONLY adjusts padding and row spacing (no auto-hiding)
+
+NOTE: Opponent column is the flexible column; widening fixed columns reduces its width.
 */
 
 .nd-container{
@@ -66,6 +76,20 @@
 
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
 
+/* Compact mode base tweaks */
+.compact{padding:2.2dvh 2.4dvw;}
+.compact .header{margin-bottom:1.2dvh;}
+.compact .row{padding:0.34dvh 0;column-gap:1.1dvw;}
+
+/* ----------------------------
+   Compact Mode (7.3") ONLY
+   - Reduce padding slightly to prevent top/bottom cutoff
+   - Tighten ONLY row spacing
+   ---------------------------- */
+.nd-container.display-800.compact{ padding: 2.0dvh 2.2dvw; }
+.nd-container.display-800.compact .row{ padding: 0.22dvh 0; }
+
 @media (max-aspect-ratio:1){
   .nd-container{padding:4dvh 4dvw;}
+  .compact{padding:3dvh 3.5dvw;}
 }
