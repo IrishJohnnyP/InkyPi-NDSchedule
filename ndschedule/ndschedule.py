@@ -37,12 +37,6 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """Notre Dame Football schedule.
-    - Large Mode (13.3"): preset for largest font + show everything
-    - Compact Mode (7.3"): same user toggles; compact spacing & 7.3" target
-    HTML/CSS handle layout; this module provides data + template params.
-    """
-
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
     def generate_settings_template(self):
@@ -51,7 +45,6 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
-        # User-controlled settings
         font_size = (settings.get("font_size") or "normal").strip().lower()
         if font_size not in ("normal", "large", "larger", "largest"):
             font_size = "normal"
@@ -62,7 +55,6 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
-        # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
             font_size = "largest"
@@ -74,14 +66,12 @@ class NdSchedule(BasePlugin):
             hide_logo = False
             settings["target_display"] = "pimoroni_133"
 
-        # Compact Mode: set target to 7.3"
         if compact_mode and not large_mode:
             settings["target_display"] = "pimoroni_73"
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Resolve dimensions
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -99,10 +89,8 @@ class NdSchedule(BasePlugin):
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
 
-        # Small display flag for 7.3" tuning
         is_73 = (display_class == "display-800")
 
-        # Season year
         current_year = self._detect_current_season_year(ttl)
         selected = settings.get("season_year")
         try:
@@ -110,7 +98,6 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
-        # Fetch
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
@@ -150,9 +137,7 @@ class NdSchedule(BasePlugin):
         }
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
-    # ----------------------------
-    # HTTP + caching
-    # ----------------------------
+    # --------------- HTTP + caching ---------------
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time()
         ts = self._cache["ts"].get(url, 0.0)
@@ -222,9 +207,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             return {}
 
-    # ----------------------------
-    # Utilities
-    # ----------------------------
+    # ---------------- Utilities ----------------
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
             if v is None:
@@ -297,7 +280,6 @@ class NdSchedule(BasePlugin):
         return ""
 
     def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
-        # Optional feature; safe to return empty if any issue
         if not opp_team_id or not game_dt_utc:
             return ""
         opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
@@ -519,7 +501,6 @@ class NdSchedule(BasePlugin):
                 dt = dt.replace(tzinfo=timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
 
-            # Default pattern (13.3"): "Nov 27 / 12:00 PM"
             def fmt_default():
                 date_part = dt_local.strftime("%b %d")
                 if not show_time:
@@ -532,12 +513,8 @@ class NdSchedule(BasePlugin):
             if not compact_date:
                 return fmt_default()
 
-            # ---- Auto-fit for 7.3" ----
-            # We try progressively shorter patterns until <= ~17 chars (the 16.75ch column).
-            # Note: ch isn't exact for proportional fonts, but length is a reasonable proxy.
+            # Auto-fit for 7.3"
             candidates = []
-
-            # 1) Slightly shorter: remove slash
             date_part = dt_local.strftime("%b %d")
             if show_time:
                 hour = dt_local.strftime("%I").lstrip("0") or "12"
@@ -547,27 +524,22 @@ class NdSchedule(BasePlugin):
             else:
                 candidates.append(f"{date_part}")
 
-            # 2) Compact AM/PM (lowercase, no space)
             if show_time:
-                ampm_c = dt_local.strftime("%p").lower()[0]  # 'a' or 'p'
+                ampm_c = dt_local.strftime("%p").lower()[0]
                 candidates.append(f"{date_part} {hour}:{minute}{ampm_c}")
 
-            # 3) Numeric date
             m = dt_local.month
             d = dt_local.day
             date_num = f"{m}/{d}"
             if show_time:
                 candidates.append(f"{date_num} {hour}:{minute}{ampm_c}")
 
-            # 4) If minutes are :00, drop them
             if show_time and minute == "00":
                 candidates.append(f"{date_num} {hour}{ampm_c}")
 
-            # 5) Last resort: shortest form with single space
             if show_time:
                 candidates.append(f"{m}/{d} {hour}{ampm_c}")
 
-            # First acceptable under threshold; else fallback to shortest
             threshold = 17
             for c in candidates:
                 if len(c) <= threshold:
@@ -614,7 +586,7 @@ class NdSchedule(BasePlugin):
             else:
                 dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
+                dt = dt.replace(tzinfo=datetime.timezone.utc)
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
             date_part = dt_local.strftime("%b %d, %Y")
             hour = dt_local.strftime("%I").lstrip("0") or "12"
