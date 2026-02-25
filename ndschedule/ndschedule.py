@@ -53,97 +53,83 @@ class NdSchedule(BasePlugin):
         params["style_settings"] = True
         return params
 
-def generate_image(self, settings: Dict[str, Any], device_config):
-    """Render the schedule using Large Mode formatting only.
+    def generate_image(self, settings: Dict[str, Any], device_config):
+        # LARGE MODE ONLY: force the previous working Large Mode behavior.
+        font_size = "largest"
+        compact_mode = False
+        show_time = True
+        show_rank_setting = True
+        hide_rank = False
+        hide_nickname = False
+        hide_logo = False
 
-    All previous toggles are ignored/removed:
-    - Large/Compact Mode
-    - Font size
-    - Show/hide options
+        cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
+        ttl = cache_minutes * 60
 
-    Kept settings:
-    - target_display
-    - season_year
-    - cache_minutes
-    """
-
-    # Hard-coded Large Mode behavior
-    font_size = "largest"
-    compact_mode = False
-    show_time = True
-    show_rank_setting = True
-    hide_rank = False
-    hide_nickname = False
-    hide_logo = False
-
-    cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
-    ttl = cache_minutes * 60
-
-    # Resolve dimensions from target_display (do NOT override)
-    target = str(settings.get("target_display") or "auto").strip().lower()
-    if target in ("pimoroni_73", "800x480", "800", "7.3"):
-        dims = PIMORONI_73
-        display_class = "display-800"
-    elif target in ("pimoroni_133", "1600x1200", "1600", "13.3"):
-        dims = PIMORONI_133
-        display_class = "display-1600"
-    else:
-        dims = device_config.get_resolution()
-        display_class = "display-auto"
-        if tuple(dims) == PIMORONI_73:
+        # Resolve dimensions (respect user target_display)
+        target = str(settings.get("target_display") or "auto").strip().lower()
+        if target in ("pimoroni_73", "800x480", "800", "7.3"):
+            dims = PIMORONI_73
             display_class = "display-800"
-        elif tuple(dims) == PIMORONI_133:
+        elif target in ("pimoroni_133", "1600x1200", "1600", "13.3"):
+            dims = PIMORONI_133
             display_class = "display-1600"
+        else:
+            dims = device_config.get_resolution()
+            display_class = "display-auto"
+            if tuple(dims) == PIMORONI_73:
+                display_class = "display-800"
+            elif tuple(dims) == PIMORONI_133:
+                display_class = "display-1600"
 
-    if device_config.get_config("orientation") == "vertical":
-        dims = dims[::-1]
+        if device_config.get_config("orientation") == "vertical":
+            dims = dims[::-1]
 
-    # Season year
-    current_year = self._detect_current_season_year(ttl)
-    selected = settings.get("season_year")
-    try:
-        season_year = int(str(selected)) if str(selected).strip() else current_year
-    except Exception:
-        season_year = current_year
+        # Season year
+        current_year = self._detect_current_season_year(ttl)
+        selected = settings.get("season_year")
+        try:
+            season_year = int(str(selected)) if str(selected).strip() else current_year
+        except Exception:
+            season_year = current_year
 
-    # Fetch
-    sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
-    nd_logo = self._fetch_team_logo(ttl)
+        # Fetch
+        sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
+        nd_logo = self._fetch_team_logo(ttl)
 
-    effective_show_rank = bool(show_rank_setting and season_year == current_year and not hide_rank)
-    rank_map: Dict[str, int] = {}
-    rank_label = ""
-    rank_updated = ""
-    if effective_show_rank:
-        rank_map, rank_label, rank_updated = self._get_rank_map(ttl)
+        effective_show_rank = bool(show_rank_setting and season_year == current_year and not hide_rank)
+        rank_map: Dict[str, int] = {}
+        rank_label = ""
+        rank_updated = ""
+        if effective_show_rank:
+            rank_map, rank_label, rank_updated = self._get_rank_map(ttl)
 
-    rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl, show_time=show_time)
+        rows = self._build_rows(sched, rank_map, effective_show_rank, season_year, ttl, show_time=show_time)
 
-    if effective_show_rank and rank_label:
-        update_line = (
-            f"Updated {rank_updated} • Rank source: {rank_label}" if rank_updated else f"Rank source: {rank_label}"
-        )
-    else:
-        sched_updated = self._format_updated(sched)
-        update_line = f"Updated {sched_updated}" if sched_updated else f"Season {season_year}"
+        if effective_show_rank and rank_label:
+            update_line = (
+                f"Updated {rank_updated} • Rank source: {rank_label}" if rank_updated else f"Rank source: {rank_label}"
+            )
+        else:
+            sched_updated = self._format_updated(sched)
+            update_line = f"Updated {sched_updated}" if sched_updated else f"Season {season_year}"
 
-    template_params = {
-        "title": f"Notre Dame Football Schedule for {season_year}",
-        "nd_logo": nd_logo,
-        "update_line": update_line,
-        "rows": rows,
-        "font_size": font_size,
-        "compact_mode": bool(compact_mode),
-        "show_time": bool(show_time),
-        "hide_rank": bool(hide_rank),
-        "hide_nickname": bool(hide_nickname),
-        "hide_logo": bool(hide_logo),
-        "display_class": display_class,
-        "plugin_settings": settings,
-    }
+        template_params = {
+            "title": f"Notre Dame Football Schedule for {season_year}",
+            "nd_logo": nd_logo,
+            "update_line": update_line,
+            "rows": rows,
+            "font_size": font_size,
+            "compact_mode": bool(compact_mode),
+            "show_time": bool(show_time),
+            "hide_rank": bool(hide_rank),
+            "hide_nickname": bool(hide_nickname),
+            "hide_logo": bool(hide_logo),
+            "display_class": display_class,
+            "plugin_settings": settings,
+        }
 
-    return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
-
+        return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
     # ----------------------------
     # HTTP + caching
     # ----------------------------
