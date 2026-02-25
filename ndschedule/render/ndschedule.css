@@ -1,8 +1,7 @@
 
-/* NdSchedule CSS – 13.3" ONLY (drop-in replacement)
-   - Removes any 7.3" rules
-   - Preserves baseline 13.3" layout
-   - Adds optional tighter rows when `.compact` is enabled on 13.3"
+/* NdSchedule CSS – 13.3" ONLY (drop-in)
+   Compact mode uses the SAME column widths as Large/Normal mode.
+   No references to 7.3". No column changes outside Compact.
 */
 
 .nd-container{
@@ -16,7 +15,7 @@
   /* Base scales */
   --scale: 1.08;
   --title-scale: 1.06;
-  /* 13.3" column widths */
+  /* Baseline 13.3" widths */
   --col-date: 33.5ch;
   --col-rec: 8ch;
   --col-site: 11ch;
@@ -66,12 +65,15 @@
 /* Footnote */
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
 
-/* Compact mode – 13.3" ONLY: tighten rows to avoid top cutoff */
-.nd-container.display-1600.compact .header{ margin-bottom: 1.0dvh; gap: 0.50dvh; }
-.nd-container.display-1600.compact .row{ padding: 0.30dvh 0; }
-.nd-container.display-1600.compact .colhdr,
-.nd-container.display-1600.compact .row{ column-gap: 1.25dvw; }
-.nd-container.display-1600.compact .update-line{ font-size: calc(min(1.65dvh,1.65dvw) * var(--scale)); }
+/* === COMPACT MODE (13.3" ONLY) ===
+   Force Compact to use EXACTLY the same column widths as Large/Normal.
+   No other changes (row spacing untouched here to avoid side-effects). */
+.nd-container.display-1600.compact{
+  --col-date: 33.5ch;
+  --col-rec: 8ch;
+  --col-site: 11ch;
+  --col-result: 13.25ch;
+}
 
 /* Responsive (generic) */
 @media (max-aspect-ratio:1){
