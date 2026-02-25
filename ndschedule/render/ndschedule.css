@@ -1,14 +1,14 @@
-/* NdSchedule CSS – Single formatting (Large and Compact identical)
+/* NdSchedule CSS – RESET / KNOWN-GOOD
 
-This CSS intentionally has NO compact-specific overrides.
-If Compact mode is enabled, it will look identical to Large mode.
+Goal: restore all formatting so Large Mode and Compact Mode both render correctly.
 
-- Spectra-safe win/loss colors
-- Theme background show-through (no html/body background paint)
+- No html/body rules (theme background show-through)
 - Column widths tuned to fit:
-    DATE/TIME: "Nov 27 / 12:00 PM"
-    SITE: "Neutral"
-    RESULT: up to "W 100-100"
+  DATE/TIME: "Nov 27 / 12:00 PM" (no truncation)
+  SITE: "Neutral"
+  RESULT: "W 100-100"
+- Column gap is a single variable so spacing stays consistent.
+- Compact mode currently uses identical formatting; only optional tweaks at bottom.
 */
 
 .nd-container{
@@ -23,11 +23,13 @@ If Compact mode is enabled, it will look identical to Large mode.
   --scale: 1.08;
   --title-scale: 1.06;
 
+  /* Fixed columns */
   --col-date: 33.5ch;
   --col-rec: 8ch;
   --col-site: 11ch;
   --col-result: 13.25ch;
 
+  /* Single source of truth for column spacing */
   --col-gap: 1.4dvw;
 }
 
@@ -70,6 +72,13 @@ If Compact mode is enabled, it will look identical to Large mode.
 .result.lose{ color: rgb(255,0,0); }
 
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
+
+/* OPTIONAL (disabled by default):
+   If you later want compact-only tightening, uncomment these:
+
+.nd-container.display-800.compact{ padding: 2.0dvh 2.2dvw; }
+.nd-container.display-800.compact .row{ padding: 0.22dvh 0; }
+*/
 
 @media (max-aspect-ratio:1){
   .nd-container{padding:4dvh 4dvw;}

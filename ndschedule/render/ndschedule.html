@@ -1,6 +1,5 @@
 {% extends "plugin.html" %}
 {% block content %}
-{# Add a deterministic class for common row counts so CSS can target exact layouts #}
 {% set n = rows|length %}
 {% set rows_class = 'rows-' ~ n %}
 
