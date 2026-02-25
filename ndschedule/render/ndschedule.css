@@ -1,11 +1,6 @@
-/* NdSchedule CSS – Restored "last-known-good" formatting
+/* NdSchedule CSS (revert baseline)
 
-- Widened columns:
-  DATE/TIME: 33.5ch (prevents AM/PM truncation)
-  SITE: 11ch (fits "Neutral")
-  RESULT: 13.25ch (+15%)
-- Column gap is fixed and identical across modes
-- Compact mode: same formatting, but optional row-tighten + padding for 800×480
+Includes the row-tighten + padding adjustment used in the original compact row-tighten drop-in.
 */
 
 .nd-container{
@@ -68,7 +63,7 @@
 
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
 
-/* Compact-only: keep formatting identical, only tighten vertical space on 800×480 */
+/* Compact-only tightening (as in last-known-good compact row-tighten) */
 .nd-container.display-800.compact{ padding: 2.0dvh 2.2dvw; }
 .nd-container.display-800.compact .row{ padding: 0.22dvh 0; }
 
