@@ -1,21 +1,15 @@
-/* NdSchedule CSS – Manual-display (no auto-hiding), Spectra 6 friendly
+/* NdSchedule CSS – COMPLETE
 
-Update:
-- Increase RESULT column width by 15%
+- Spectra 6 friendly win/loss colors
+- Theme background show-through (no html/body, no background paint)
+- Column widths tuned to fit:
+    DATE/TIME: "Nov 27 / 12:00 PM" (no AM/PM truncation)
+    SITE: "Neutral"
+    RESULT: accommodates long scores (e.g., "W 100-100")
+- Compact Mode (7.3"):
+    * ONLY adjusts padding and row spacing (no auto-hiding)
 
-Previous:
-- --col-result: 11.5ch
-New:
-- --col-result: 13.25ch (11.5 * 1.15 = 13.225, rounded)
-
-Other current widths (unchanged):
-- --col-date: 33.5ch
-- --col-site: 11ch
-
-Notes:
-- Opponent column remains flexible (minmax(0, 1fr)) and will shrink slightly as fixed columns grow.
-- User decides what to hide via settings (no automatic hiding).
-- cfbrankings-style theme background show-through (no html/body rules, no background paint).
+NOTE: Opponent column is the flexible column; widening fixed columns reduces its width.
 */
 
 .nd-container{
@@ -27,6 +21,7 @@ Notes:
   font-weight:600;
   color: inherit;
 
+  /* Slightly larger base scale */
   --scale: 1.08;
   --title-scale: 1.06;
 
@@ -37,9 +32,11 @@ Notes:
   --col-result: 13.25ch;
 }
 
+/* Per-panel base padding */
 .nd-container.display-800{ padding:2.4dvh 2.6dvw; }
 .nd-container.display-1600{ padding:3.6dvh 3.8dvw; }
 
+/* Font size presets */
 .font-normal { --scale:1.08; --title-scale:1.06; }
 .font-large  { --scale:1.18; --title-scale:1.12; }
 .font-larger { --scale:1.30; --title-scale:1.20; }
@@ -51,6 +48,7 @@ Notes:
 .title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+/* Grid */
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
@@ -72,26 +70,26 @@ Notes:
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
+/* Spectra-safe win/loss colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
 
+/* Compact mode base tweaks */
 .compact{padding:2.2dvh 2.4dvw;}
 .compact .header{margin-bottom:1.2dvh;}
 .compact .row{padding:0.34dvh 0;column-gap:1.1dvw;}
 
+/* ----------------------------
+   Compact Mode (7.3") ONLY
+   - Reduce padding slightly to prevent top/bottom cutoff
+   - Tighten ONLY row spacing
+   ---------------------------- */
+.nd-container.display-800.compact{ padding: 2.0dvh 2.2dvw; }
+.nd-container.display-800.compact .row{ padding: 0.22dvh 0; }
+
 @media (max-aspect-ratio:1){
   .nd-container{padding:4dvh 4dvw;}
   .compact{padding:3dvh 3.5dvw;}
-}
-/* Compact Mode (7.3") – tighten ONLY space between rows
-   Paste at the END of ndschedule.css
-*/
-.nd-container.display-800.compact .row { 
-  padding: 0.20dvh 0; 
-}
-
-.nd-container.display-800.compact .sep { 
-  opacity: 0.18; 
 }
