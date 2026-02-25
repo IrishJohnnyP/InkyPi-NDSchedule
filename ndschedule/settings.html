@@ -1,5 +1,4 @@
 <div class="form-grid">
-  <!-- Target display -->
   <div class="form-group">
     <label for="target_display">Target display</label>
     <select id="target_display" name="target_display">
@@ -9,7 +8,6 @@
     </select>
   </div>
 
-  <!-- Presets -->
   <div class="form-group">
     <label for="large_mode">Large Mode (13.3")</label>
     <div class="form-check">
@@ -26,13 +24,11 @@
     </div>
   </div>
 
-  <!-- Season year -->
   <div class="form-group">
     <label for="season_year">Season year</label>
     <input id="season_year" name="season_year" type="number" min="2000" max="2100" value="{{ settings.get('season_year','') }}" placeholder="2026" />
   </div>
 
-  <!-- Font size -->
   <div class="form-group">
     <label for="font_size">Font size</label>
     <select id="font_size" name="font_size">
@@ -45,7 +41,6 @@
     <small>Large Mode forces Largest. Compact Mode does not force font size.</small>
   </div>
 
-  <!-- Toggles -->
   <div class="form-group">
     <label for="show_time">Show game time</label>
     <input id="show_time" name="show_time" type="checkbox" value="true" {{ 'checked' if settings.get('show_time', True) else '' }} />
@@ -71,7 +66,6 @@
     <input id="hide_logo" name="hide_logo" type="checkbox" value="true" {{ 'checked' if settings.get('hide_logo', False) else '' }} />
   </div>
 
-  <!-- Cache -->
   <div class="form-group">
     <label for="cache_minutes">Cache (minutes)</label>
     <input id="cache_minutes" name="cache_minutes" type="number" min="0" max="1440" value="{{ settings.get('cache_minutes', 30) }}" />
