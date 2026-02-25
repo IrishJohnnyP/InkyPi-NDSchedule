@@ -1,79 +1,11 @@
-<div class="form-grid">
-  <!-- Target display -->
-  <div class="form-group">
-    <label for="target_display">Target display</label>
-    <select id="target_display" name="target_display">
-      <option value="auto" {{ 'selected' if (settings.get('target_display','auto')=='auto') else '' }}>Auto (use configured device)</option>
-      <option value="pimoroni_73" {{ 'selected' if (settings.get('target_display')=='pimoroni_73') else '' }}>Pimoroni Inky Impression 7.3" (800×480)</option>
-      <option value="pimoroni_133" {{ 'selected' if (settings.get('target_display')=='pimoroni_133') else '' }}>Pimoroni Inky Impression 13.3" (1600×1200)</option>
-    </select>
-  </div>
-
-  <!-- Presets -->
-  <div class="form-group">
-    <label for="large_mode">Large Mode (13.3")</label>
-    <div class="form-check">
-      <input id="large_mode" name="large_mode" type="checkbox" value="true" {{ 'checked' if settings.get('large_mode', False) else '' }} />
-      <small>Forces largest font, shows everything, and targets 13.3".</small>
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label for="compact_mode">Compact mode (7.3")</label>
-    <div class="form-check">
-      <input id="compact_mode" name="compact_mode" type="checkbox" value="true" {{ 'checked' if settings.get('compact_mode', False) else '' }} />
-      <small>Tightens row spacing/padding and targets 7.3". Uses the same show/hide toggles below.</small>
-    </div>
-  </div>
-
-  <!-- Season year -->
-  <div class="form-group">
-    <label for="season_year">Season year</label>
-    <input id="season_year" name="season_year" type="number" min="2000" max="2100" value="{{ settings.get('season_year','') }}" placeholder="2026" />
-  </div>
-
-  <!-- Font size -->
-  <div class="form-group">
-    <label for="font_size">Font size</label>
-    <select id="font_size" name="font_size">
-      {% set fs = (settings.get('font_size') or 'normal').lower() %}
-      <option value="normal"  {{ 'selected' if fs=='normal'  else '' }}>Normal</option>
-      <option value="large"   {{ 'selected' if fs=='large'   else '' }}>Large</option>
-      <option value="larger"  {{ 'selected' if fs=='larger'  else '' }}>Larger</option>
-      <option value="largest" {{ 'selected' if fs=='largest' else '' }}>Largest</option>
-    </select>
-    <small>Large Mode forces Largest. Compact Mode does not force font size.</small>
-  </div>
-
-  <!-- Toggles -->
-  <div class="form-group">
-    <label for="show_time">Show game time</label>
-    <input id="show_time" name="show_time" type="checkbox" value="true" {{ 'checked' if settings.get('show_time', True) else '' }} />
-  </div>
-
-  <div class="form-group">
-    <label for="show_rank">Show opponent rank</label>
-    <input id="show_rank" name="show_rank" type="checkbox" value="true" {{ 'checked' if settings.get('show_rank', True) else '' }} />
-  </div>
-
-  <div class="form-group">
-    <label for="hide_rank">Hide rank in list</label>
-    <input id="hide_rank" name="hide_rank" type="checkbox" value="true" {{ 'checked' if settings.get('hide_rank', False) else '' }} />
-  </div>
-
-  <div class="form-group">
-    <label for="hide_nickname">Hide nickname in list</label>
-    <input id="hide_nickname" name="hide_nickname" type="checkbox" value="true" {{ 'checked' if settings.get('hide_nickname', False) else '' }} />
-  </div>
-
-  <div class="form-group">
-    <label for="hide_logo">Hide opponent logo</label>
-    <input id="hide_logo" name="hide_logo" type="checkbox" value="true" {{ 'checked' if settings.get('hide_logo', False) else '' }} />
-  </div>
-
-  <!-- Cache -->
-  <div class="form-group">
-    <label for="cache_minutes">Cache (minutes)</label>
-    <input id="cache_minutes" name="cache_minutes" type="number" min="0" max="1440" value="{{ settings.get('cache_minutes', 30) }}" />
-  </div>
-</div>
+Target display Auto (use configured device) Pimoroni Inky Impression 7.3" (800×480) Pimoroni Inky Impression 13.3" (1600×1200) 
+Large Mode Preset for 13.3": Largest font + show everything. 
+Compact mode (7.3") Same settings as normal. Only tightens row spacing and reduces padding. Auto switches target display to 7.3". 
+Season year 
+Font size Normal Large Larger Largest Large Mode forces Largest. Compact Mode does not force font size. 
+Show game time 
+Show opponent rank 
+Hide rank in list 
+Hide nickname in list 
+Hide opponent logo 
+Cache (minutes) 
