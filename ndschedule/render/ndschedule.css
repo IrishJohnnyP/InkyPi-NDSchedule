@@ -1,9 +1,14 @@
-/* NdSchedule CSS – EXACT SAME formatting for Large and Compact
+/* NdSchedule CSS – Single formatting (Large and Compact identical)
 
-Guarantees:
-- Grid template AND column-gap are identical in all modes.
-- Compact mode ONLY adjusts container padding + row vertical padding on 800×480.
-- No compact-specific column spacing rules.
+This CSS intentionally has NO compact-specific overrides.
+If Compact mode is enabled, it will look identical to Large mode.
+
+- Spectra-safe win/loss colors
+- Theme background show-through (no html/body background paint)
+- Column widths tuned to fit:
+    DATE/TIME: "Nov 27 / 12:00 PM"
+    SITE: "Neutral"
+    RESULT: up to "W 100-100"
 */
 
 .nd-container{
@@ -18,21 +23,17 @@ Guarantees:
   --scale: 1.08;
   --title-scale: 1.06;
 
-  /* column widths */
   --col-date: 33.5ch;
   --col-rec: 8ch;
   --col-site: 11ch;
   --col-result: 13.25ch;
 
-  /* SINGLE source of truth for column gap */
   --col-gap: 1.4dvw;
 }
 
-/* Per-panel base padding */
 .nd-container.display-800{ padding:2.4dvh 2.6dvw; }
 .nd-container.display-1600{ padding:3.6dvh 3.8dvw; }
 
-/* Font presets (Python forces Largest in Large/Compact modes) */
 .font-normal { --scale:1.08; --title-scale:1.06; }
 .font-large  { --scale:1.18; --title-scale:1.12; }
 .font-larger { --scale:1.30; --title-scale:1.20; }
@@ -65,15 +66,10 @@ Guarantees:
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
-/* Spectra-safe win/loss colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
-
-/* Compact Mode (7.3" / 800×480): ONLY padding + row spacing */
-.nd-container.display-800.compact{ padding: 2.0dvh 2.2dvw; }
-.nd-container.display-800.compact .row{ padding: 0.22dvh 0; }
 
 @media (max-aspect-ratio:1){
   .nd-container{padding:4dvh 4dvw;}
