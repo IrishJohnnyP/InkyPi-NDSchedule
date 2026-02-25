@@ -17,7 +17,7 @@
 <div class="form-check mt-3">
   <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
   <label class="form-check-label" for="compact_mode_checkbox">Compact mode (7.3")</label>
-  <small class="form-text text-muted d-block">Auto switches target display to 7.3". Does not force time/nickname; you can choose.</small>
+  <small class="form-text text-muted d-block">Same settings as normal. Only tightens row spacing and reduces padding. Auto switches target display to 7.3".</small>
 </div>
 <input type="hidden" id="compact_mode" name="compact_mode" value="false" />
 
@@ -34,7 +34,7 @@
     <option value="larger">Larger</option>
     <option value="largest">Largest</option>
   </select>
-  <small class="form-text text-muted">Large Mode forces Largest.</small>
+  <small class="form-text text-muted">Large Mode forces Largest. Compact Mode does not force font size.</small>
 </div>
 
 <input type="hidden" id="show_time" name="show_time" value="true" />
@@ -111,7 +111,6 @@
       td.value = 'pimoroni_133';
       td.disabled = true;
       document.getElementById('font_size').value = 'largest';
-      // turn off compact
       document.getElementById('compact_mode_checkbox').checked = false;
       syncHiddenBool('compact_mode','compact_mode_checkbox');
     } else {
@@ -124,7 +123,6 @@
     if (isOn) {
       td.value = 'pimoroni_73';
       td.disabled = true;
-      // turn off large
       document.getElementById('large_mode_checkbox').checked = false;
       syncHiddenBool('large_mode','large_mode_checkbox');
     } else {
