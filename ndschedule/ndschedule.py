@@ -20,6 +20,7 @@ PIMORONI_133 = (1600, 1200)
 
 
 def _ensure_icon_file():
+    """Ensure plugin icon exists."""
     try:
         here = Path(__file__).resolve().parent
         icon_path = here / "icon.png"
@@ -39,13 +40,14 @@ _ensure_icon_file()
 class NdSchedule(BasePlugin):
     """Notre Dame Football schedule.
 
-    This drop-in restores missing helper methods:
-    - _build_rows
-    - _eastern_tz
+    Modes:
+    - Large Mode: 13.3" preset (Largest font + show everything).
+    - Compact Mode: EXACT same formatting as Large Mode (same columns/spacing in CSS),
+      but (a) forces Largest font and (b) uses compact-only CSS tweaks for 7.3":
+         * slightly reduced container padding
+         * tightened row vertical padding
 
-    And keeps behavior:
-    - Large Mode forces largest font + show everything and target 13.3
-    - Compact Mode forces largest font, keeps user show/hide toggles, and targets 7.3
+    Compact Mode does NOT auto-hide content; user toggles for time/nickname/logo/rank remain in effect.
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -56,6 +58,7 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
+        # User settings
         font_size = (settings.get("font_size") or "normal").strip().lower()
         if font_size not in ("normal", "large", "larger", "largest"):
             font_size = "normal"
@@ -67,6 +70,7 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
+        # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
             font_size = "largest"
@@ -78,6 +82,7 @@ class NdSchedule(BasePlugin):
             hide_logo = False
             settings["target_display"] = "pimoroni_133"
 
+        # Compact Mode: force Largest font and 7.3" render target, but keep user's show/hide toggles
         if compact_mode and not large_mode:
             font_size = "largest"
             settings["target_display"] = "pimoroni_73"
@@ -85,6 +90,7 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
+        # Resolve dimensions
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -103,6 +109,7 @@ class NdSchedule(BasePlugin):
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
 
+        # Season year
         current_year = self._detect_current_season_year(ttl)
         selected = settings.get("season_year")
         try:
@@ -110,9 +117,11 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
+        # Fetch schedule + logo
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
+        # Rankings only for current season, and only if not hidden
         effective_show_rank = bool(show_rank_setting and season_year == current_year and not hide_rank)
         rank_map: Dict[str, int] = {}
         rank_label = ""
@@ -156,12 +165,10 @@ class NdSchedule(BasePlugin):
         ts = self._cache["ts"].get(url, 0.0)
         if ttl > 0 and url in self._cache["data"] and (now - ts) < ttl:
             return self._cache["data"][url]
-
         session = get_http_session()
         resp = session.get(url, timeout=25)
         resp.raise_for_status()
         data = resp.json()
-
         if ttl > 0:
             self._cache["ts"][url] = now
             self._cache["data"][url] = data
@@ -223,7 +230,7 @@ class NdSchedule(BasePlugin):
             return {}
 
     # ----------------------------
-    # Timezone helper (this was missing)
+    # Timezone helper
     # ----------------------------
 
     def _eastern_tz(self):
@@ -545,7 +552,6 @@ class NdSchedule(BasePlugin):
 
     def _format_game_datetime(self, iso_str: str, show_time: bool = True) -> str:
         from datetime import datetime, timezone
-
         if not iso_str:
             return "TBD"
         tzinfo = self._eastern_tz()
@@ -566,7 +572,6 @@ class NdSchedule(BasePlugin):
 
     def _format_iso_datetime(self, iso_str: str) -> str:
         from datetime import datetime, timezone
-
         if not iso_str:
             return ""
         tzinfo = self._eastern_tz()
@@ -592,9 +597,7 @@ class NdSchedule(BasePlugin):
                 break
         if not date_str:
             return ""
-
         from datetime import datetime, timezone
-
         tzinfo = self._eastern_tz()
         try:
             if date_str.isdigit() and len(date_str) >= 12:
@@ -603,10 +606,8 @@ class NdSchedule(BasePlugin):
                 dt = datetime.fromtimestamp(int(date_str), tz=timezone.utc)
             else:
                 dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
-
             dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
             date_part = dt_local.strftime("%b %d, %Y")
             hour = dt_local.strftime("%I").lstrip("0") or "12"
