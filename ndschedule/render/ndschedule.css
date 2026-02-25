@@ -1,8 +1,5 @@
 
-/* 7.3" target: keep the SAME column proportions as 13.3" (half widths) */
+/* 7.3" target: Date/Time column sized to fit "Nov 17 / 12:00PM" */
 .nd-container.display-800{
-  --col-date: 16.75ch;   /* 33.5ch / 2 */
-  --col-rec: 4ch;        /* 8ch / 2     */
-  --col-site: 5.5ch;     /* 11ch / 2    */
-  --col-result: 6.625ch; /* 13.25ch / 2 */
+  --col-date: 18ch; /* ~16ch text + small buffer */
 }
