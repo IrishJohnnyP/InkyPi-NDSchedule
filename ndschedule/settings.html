@@ -1,37 +1,54 @@
-<!-- NdSchedule settings (persistent checkboxes)
+<!-- NdSchedule settings – MAX compatibility persistence repair
 
-Fix: checkboxes now submit and persist via name= plus a hidden false input.
+Problem observed: mode checkboxes not being persisted by the host UI.
+
+This template is designed to work across multiple settings-save mechanisms by:
+1) Using the standard "hidden false + checkbox true" pattern (same name) so a normal HTML form post always submits a value.
+2) ALSO keeping explicit hidden fields (with stable ids) and syncing them via JS on change + on form submit.
+3) Reading back from injected pluginSettings (if present) to set the UI state.
+
+If your platform only persists hidden inputs, it will still work.
+If your platform persists normal form fields, it will still work.
 -->
+
+<style>
+  /* tiny helper for readability */
+  .muted-help{display:block;opacity:.75;font-size:.9em;margin-top:.15rem}
+</style>
 
 <div class="form-group">
   <label for="target_display" class="form-label">Target display</label>
-  <select class="form-select" id="target_display" name="target_display">
+  <select class="form-select" id="target_display" name="target_display" data-setting="target_display">
     <option value="auto">Auto (use configured device)</option>
     <option value="pimoroni_73">Pimoroni Inky Impression 7.3&quot; (800×480)</option>
     <option value="pimoroni_133">Pimoroni Inky Impression 13.3&quot; (1600×1200)</option>
   </select>
 </div>
 
-<input type="hidden" name="large_mode" value="false" />
+<!-- LARGE MODE: hidden false first, checkbox true second -->
+<input type="hidden" id="large_mode_hidden" name="large_mode" value="false" data-setting="large_mode" />
 <div class="form-check mt-3">
-  <input class="form-check-input" type="checkbox" id="large_mode" name="large_mode" value="true">
-  <label class="form-check-label" for="large_mode">Large Mode</label>
+  <input class="form-check-input" type="checkbox" id="large_mode_checkbox" name="large_mode" value="true">
+  <label class="form-check-label" for="large_mode_checkbox">Large Mode</label>
+  <span class="muted-help">Preset behavior in code (largest font + show everything).</span>
 </div>
 
-<input type="hidden" name="compact_mode" value="false" />
+<!-- COMPACT MODE -->
+<input type="hidden" id="compact_mode_hidden" name="compact_mode" value="false" data-setting="compact_mode" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="compact_mode" name="compact_mode" value="true">
-  <label class="form-check-label" for="compact_mode">Compact Mode</label>
+  <input class="form-check-input" type="checkbox" id="compact_mode_checkbox" name="compact_mode" value="true">
+  <label class="form-check-label" for="compact_mode_checkbox">Compact Mode</label>
+  <span class="muted-help">Compact preset per code (may differ depending on current plugin version).</span>
 </div>
 
 <div class="form-group mt-3">
   <label for="season_year" class="form-label">Season year</label>
-  <select class="form-select" id="season_year" name="season_year"></select>
+  <select class="form-select" id="season_year" name="season_year" data-setting="season_year"></select>
 </div>
 
 <div class="form-group mt-3">
   <label for="font_size" class="form-label">Font size</label>
-  <select class="form-select" id="font_size" name="font_size">
+  <select class="form-select" id="font_size" name="font_size" data-setting="font_size">
     <option value="normal">Normal</option>
     <option value="large">Large</option>
     <option value="larger">Larger</option>
@@ -39,39 +56,44 @@ Fix: checkboxes now submit and persist via name= plus a hidden false input.
   </select>
 </div>
 
-<input type="hidden" name="show_time" value="false" />
+<!-- SHOW TIME -->
+<input type="hidden" id="show_time_hidden" name="show_time" value="false" data-setting="show_time" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="show_time" name="show_time" value="true">
-  <label class="form-check-label" for="show_time">Show game time</label>
+  <input class="form-check-input" type="checkbox" id="show_time_checkbox" name="show_time" value="true">
+  <label class="form-check-label" for="show_time_checkbox">Show game time</label>
 </div>
 
-<input type="hidden" name="show_rank" value="false" />
+<!-- SHOW RANK -->
+<input type="hidden" id="show_rank_hidden" name="show_rank" value="false" data-setting="show_rank" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="show_rank" name="show_rank" value="true">
-  <label class="form-check-label" for="show_rank">Show opponent rank</label>
+  <input class="form-check-input" type="checkbox" id="show_rank_checkbox" name="show_rank" value="true">
+  <label class="form-check-label" for="show_rank_checkbox">Show opponent rank</label>
 </div>
 
-<input type="hidden" name="hide_rank" value="false" />
+<!-- HIDE RANK -->
+<input type="hidden" id="hide_rank_hidden" name="hide_rank" value="false" data-setting="hide_rank" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_rank" name="hide_rank" value="true">
-  <label class="form-check-label" for="hide_rank">Hide rank in list</label>
+  <input class="form-check-input" type="checkbox" id="hide_rank_checkbox" name="hide_rank" value="true">
+  <label class="form-check-label" for="hide_rank_checkbox">Hide rank in list</label>
 </div>
 
-<input type="hidden" name="hide_nickname" value="false" />
+<!-- HIDE NICKNAME -->
+<input type="hidden" id="hide_nickname_hidden" name="hide_nickname" value="false" data-setting="hide_nickname" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_nickname" name="hide_nickname" value="true">
-  <label class="form-check-label" for="hide_nickname">Hide nickname in list</label>
+  <input class="form-check-input" type="checkbox" id="hide_nickname_checkbox" name="hide_nickname" value="true">
+  <label class="form-check-label" for="hide_nickname_checkbox">Hide nickname in list</label>
 </div>
 
-<input type="hidden" name="hide_logo" value="false" />
+<!-- HIDE LOGO -->
+<input type="hidden" id="hide_logo_hidden" name="hide_logo" value="false" data-setting="hide_logo" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_logo" name="hide_logo" value="true">
-  <label class="form-check-label" for="hide_logo">Hide opponent logo</label>
+  <input class="form-check-input" type="checkbox" id="hide_logo_checkbox" name="hide_logo" value="true">
+  <label class="form-check-label" for="hide_logo_checkbox">Hide opponent logo</label>
 </div>
 
 <div class="form-group mt-3">
   <label for="cache_minutes" class="form-label">Cache (minutes)</label>
-  <input class="form-control" type="number" id="cache_minutes" name="cache_minutes" min="0" max="1440" value="30">
+  <input class="form-control" type="number" id="cache_minutes" name="cache_minutes" min="0" max="1440" value="30" data-setting="cache_minutes">
 </div>
 
 <script>
@@ -83,6 +105,20 @@ Fix: checkboxes now submit and persist via name= plus a hidden false input.
     if (['0','false','no','off',''].includes(s)) return false;
     return fallback;
   }
+
+  function setHidden(hiddenId, checked) {
+    const h = document.getElementById(hiddenId);
+    if (h) h.value = checked ? 'true' : 'false';
+  }
+
+  function bindCheckbox(cbId, hiddenId) {
+    const cb = document.getElementById(cbId);
+    if (!cb) return;
+    // init hidden based on current checked state
+    setHidden(hiddenId, cb.checked);
+    cb.addEventListener('change', () => setHidden(hiddenId, cb.checked));
+  }
+
   function populateYears() {
     const sel = document.getElementById('season_year');
     if (!sel) return;
@@ -99,23 +135,72 @@ Fix: checkboxes now submit and persist via name= plus a hidden false input.
       sel.appendChild(o);
     }
   }
+
+  function syncAllHiddens(){
+    setHidden('large_mode_hidden', document.getElementById('large_mode_checkbox')?.checked);
+    setHidden('compact_mode_hidden', document.getElementById('compact_mode_checkbox')?.checked);
+    setHidden('show_time_hidden', document.getElementById('show_time_checkbox')?.checked);
+    setHidden('show_rank_hidden', document.getElementById('show_rank_checkbox')?.checked);
+    setHidden('hide_rank_hidden', document.getElementById('hide_rank_checkbox')?.checked);
+    setHidden('hide_nickname_hidden', document.getElementById('hide_nickname_checkbox')?.checked);
+    setHidden('hide_logo_hidden', document.getElementById('hide_logo_checkbox')?.checked);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     populateYears();
+
+    // Load existing settings if injected
     const ps = (typeof pluginSettings !== 'undefined') ? pluginSettings : {};
-    const setVal = (id, val) => { const el=document.getElementById(id); if(el && val !== undefined) el.value = val; };
-    const setChk = (id, val) => { const el=document.getElementById(id); if(el) el.checked = toBool(val, el.checked); };
 
-    setVal('target_display', ps.target_display || 'auto');
-    setVal('season_year', ps.season_year || '');
-    setVal('font_size', ps.font_size || 'normal');
-    setVal('cache_minutes', ps.cache_minutes ?? 30);
+    // Set values
+    document.getElementById('target_display').value = (ps.target_display || 'auto');
+    document.getElementById('season_year').value = (ps.season_year || '');
+    document.getElementById('font_size').value = (ps.font_size || 'normal');
+    document.getElementById('cache_minutes').value = (ps.cache_minutes ?? 30);
 
-    setChk('large_mode', ps.large_mode);
-    setChk('compact_mode', ps.compact_mode);
-    setChk('show_time', ps.show_time ?? true);
-    setChk('show_rank', ps.show_rank ?? true);
-    setChk('hide_rank', ps.hide_rank);
-    setChk('hide_nickname', ps.hide_nickname);
-    setChk('hide_logo', ps.hide_logo);
+    // Set checkboxes from saved state
+    document.getElementById('large_mode_checkbox').checked = toBool(ps.large_mode, false);
+    document.getElementById('compact_mode_checkbox').checked = toBool(ps.compact_mode, false);
+    document.getElementById('show_time_checkbox').checked = toBool(ps.show_time, true);
+    document.getElementById('show_rank_checkbox').checked = toBool(ps.show_rank, true);
+    document.getElementById('hide_rank_checkbox').checked = toBool(ps.hide_rank, false);
+    document.getElementById('hide_nickname_checkbox').checked = toBool(ps.hide_nickname, false);
+    document.getElementById('hide_logo_checkbox').checked = toBool(ps.hide_logo, false);
+
+    // Bind checkboxes to hidden values
+    bindCheckbox('large_mode_checkbox', 'large_mode_hidden');
+    bindCheckbox('compact_mode_checkbox', 'compact_mode_hidden');
+    bindCheckbox('show_time_checkbox', 'show_time_hidden');
+    bindCheckbox('show_rank_checkbox', 'show_rank_hidden');
+    bindCheckbox('hide_rank_checkbox', 'hide_rank_hidden');
+    bindCheckbox('hide_nickname_checkbox', 'hide_nickname_hidden');
+    bindCheckbox('hide_logo_checkbox', 'hide_logo_hidden');
+
+    // Final sync
+    syncAllHiddens();
+
+    // Make sure sync happens on save/submit for platforms that read hidden values
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', syncAllHiddens);
+    }
+
+    // Keep Large and Compact mutually exclusive (UI only)
+    const large = document.getElementById('large_mode_checkbox');
+    const compact = document.getElementById('compact_mode_checkbox');
+    if (large && compact) {
+      large.addEventListener('change', () => {
+        if (large.checked) {
+          compact.checked = false;
+          setHidden('compact_mode_hidden', false);
+        }
+      });
+      compact.addEventListener('change', () => {
+        if (compact.checked) {
+          large.checked = false;
+          setHidden('large_mode_hidden', false);
+        }
+      });
+    }
   });
 </script>
