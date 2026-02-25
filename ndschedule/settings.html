@@ -1,25 +1,35 @@
+<!-- NdSchedule settings (robust checkbox persistence)
+
+Key change:
+- Each checkbox now has a proper name= setting key.
+- A hidden input of the same name is included first to ensure "false" is submitted when unchecked.
+- This makes selections persist even if JavaScript fails.
+-->
+
 <div class="form-group">
   <label for="target_display" class="form-label">Target display</label>
   <select class="form-select" id="target_display" name="target_display">
     <option value="auto">Auto (use configured device)</option>
-    <option value="pimoroni_73">Pimoroni Inky Impression 7.3" (800×480)</option>
-    <option value="pimoroni_133">Pimoroni Inky Impression 13.3" (1600×1200)</option>
+    <option value="pimoroni_73">Pimoroni Inky Impression 7.3&quot; (800×480)</option>
+    <option value="pimoroni_133">Pimoroni Inky Impression 13.3&quot; (1600×1200)</option>
   </select>
 </div>
 
+<!-- Large Mode -->
+<input type="hidden" name="large_mode" value="false" />
 <div class="form-check mt-3">
-  <input class="form-check-input" type="checkbox" id="large_mode_checkbox">
+  <input class="form-check-input" type="checkbox" id="large_mode_checkbox" name="large_mode" value="true">
   <label class="form-check-label" for="large_mode_checkbox">Large Mode</label>
   <small class="form-text text-muted d-block">Preset: Largest font + show everything.</small>
 </div>
-<input type="hidden" id="large_mode" name="large_mode" value="false" />
 
+<!-- Compact Mode -->
+<input type="hidden" name="compact_mode" value="false" />
 <div class="form-check mt-3">
-  <input class="form-check-input" type="checkbox" id="compact_mode_checkbox">
+  <input class="form-check-input" type="checkbox" id="compact_mode_checkbox" name="compact_mode" value="true">
   <label class="form-check-label" for="compact_mode_checkbox">Compact Mode</label>
-  <small class="form-text text-muted d-block">TEMPORARILY identical to Large Mode (for troubleshooting). Next step: add row tightening.</small>
+  <small class="form-text text-muted d-block">(Currently) same preset as Large Mode. We will adjust layout next.</small>
 </div>
-<input type="hidden" id="compact_mode" name="compact_mode" value="false" />
 
 <div class="form-group mt-3">
   <label for="season_year" class="form-label">Season year</label>
@@ -37,34 +47,38 @@
   <small class="form-text text-muted">Large/Compact modes force Largest.</small>
 </div>
 
-<input type="hidden" id="show_time" name="show_time" value="true" />
-<input type="hidden" id="show_rank" name="show_rank" value="true" />
-<input type="hidden" id="hide_rank" name="hide_rank" value="false" />
-<input type="hidden" id="hide_nickname" name="hide_nickname" value="false" />
-<input type="hidden" id="hide_logo" name="hide_logo" value="false" />
-
+<!-- Show time -->
+<input type="hidden" name="show_time" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="show_time_checkbox">
+  <input class="form-check-input" type="checkbox" id="show_time_checkbox" name="show_time" value="true">
   <label class="form-check-label" for="show_time_checkbox">Show game time</label>
 </div>
 
+<!-- Show rank -->
+<input type="hidden" name="show_rank" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="show_rank_checkbox">
+  <input class="form-check-input" type="checkbox" id="show_rank_checkbox" name="show_rank" value="true">
   <label class="form-check-label" for="show_rank_checkbox">Show opponent rank</label>
 </div>
 
+<!-- Hide rank -->
+<input type="hidden" name="hide_rank" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_rank_checkbox">
+  <input class="form-check-input" type="checkbox" id="hide_rank_checkbox" name="hide_rank" value="true">
   <label class="form-check-label" for="hide_rank_checkbox">Hide rank in list</label>
 </div>
 
+<!-- Hide nickname -->
+<input type="hidden" name="hide_nickname" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_nickname_checkbox">
+  <input class="form-check-input" type="checkbox" id="hide_nickname_checkbox" name="hide_nickname" value="true">
   <label class="form-check-label" for="hide_nickname_checkbox">Hide nickname in list</label>
 </div>
 
+<!-- Hide logo -->
+<input type="hidden" name="hide_logo" value="false" />
 <div class="form-check mt-2">
-  <input class="form-check-input" type="checkbox" id="hide_logo_checkbox">
+  <input class="form-check-input" type="checkbox" id="hide_logo_checkbox" name="hide_logo" value="true">
   <label class="form-check-label" for="hide_logo_checkbox">Hide opponent logo</label>
 </div>
 
@@ -74,7 +88,7 @@
 </div>
 
 <script>
-  function toBool(v, fallback=true) {
+  function toBool(v, fallback=false) {
     if (v === undefined || v === null) return fallback;
     if (typeof v === 'boolean') return v;
     const s = String(v).toLowerCase().trim();
@@ -82,12 +96,7 @@
     if (['0','false','no','off',''].includes(s)) return false;
     return fallback;
   }
-  function syncHiddenBool(hiddenId, checkboxId) {
-    const hidden = document.getElementById(hiddenId);
-    const cb = document.getElementById(checkboxId);
-    if (!hidden || !cb) return;
-    hidden.value = cb.checked ? 'true' : 'false';
-  }
+
   function populateYears() {
     const sel = document.getElementById('season_year');
     if (!sel) return;
@@ -105,78 +114,51 @@
     }
   }
 
-  function applyLargeOrCompact(isOn){
-    if (isOn) {
-      document.getElementById('font_size').value = 'largest';
-      document.getElementById('show_time_checkbox').checked = true;
-      document.getElementById('show_rank_checkbox').checked = true;
-      document.getElementById('hide_rank_checkbox').checked = false;
-      document.getElementById('hide_nickname_checkbox').checked = false;
-      document.getElementById('hide_logo_checkbox').checked = false;
+  // Optional UI nicety: keep Large and Compact mutually exclusive.
+  function enforceExclusive() {
+    const large = document.getElementById('large_mode_checkbox');
+    const compact = document.getElementById('compact_mode_checkbox');
+    if (!large || !compact) return;
 
-      syncHiddenBool('show_time','show_time_checkbox');
-      syncHiddenBool('show_rank','show_rank_checkbox');
-      syncHiddenBool('hide_rank','hide_rank_checkbox');
-      syncHiddenBool('hide_nickname','hide_nickname_checkbox');
-      syncHiddenBool('hide_logo','hide_logo_checkbox');
-    }
+    large.addEventListener('change', () => {
+      if (large.checked) compact.checked = false;
+      // Also force font size dropdown visually
+      if (large.checked) document.getElementById('font_size').value = 'largest';
+    });
+
+    compact.addEventListener('change', () => {
+      if (compact.checked) large.checked = false;
+      if (compact.checked) document.getElementById('font_size').value = 'largest';
+    });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     populateYears();
+
+    // If the host injects pluginSettings, use it to populate controls.
     const ps = (typeof pluginSettings !== 'undefined') ? pluginSettings : {};
 
-    document.getElementById('target_display').value = (ps.target_display || 'auto');
-    document.getElementById('season_year').value = (ps.season_year || '');
-    document.getElementById('font_size').value = (ps.font_size || 'normal');
-    document.getElementById('cache_minutes').value = (ps.cache_minutes ?? 30);
+    const setVal = (id, val) => { const el=document.getElementById(id); if(el) el.value = (val ?? el.value); };
+    const setChk = (id, val) => { const el=document.getElementById(id); if(el) el.checked = toBool(val, el.checked); };
 
-    document.getElementById('large_mode_checkbox').checked = toBool(ps.large_mode, false);
-    document.getElementById('compact_mode_checkbox').checked = toBool(ps.compact_mode, false);
+    setVal('target_display', ps.target_display || 'auto');
+    setVal('season_year', ps.season_year || '');
+    setVal('font_size', ps.font_size || 'normal');
+    setVal('cache_minutes', (ps.cache_minutes ?? 30));
 
-    document.getElementById('show_time_checkbox').checked = toBool(ps.show_time, true);
-    document.getElementById('show_rank_checkbox').checked = toBool(ps.show_rank, true);
-    document.getElementById('hide_rank_checkbox').checked = toBool(ps.hide_rank, false);
-    document.getElementById('hide_nickname_checkbox').checked = toBool(ps.hide_nickname, false);
-    document.getElementById('hide_logo_checkbox').checked = toBool(ps.hide_logo, false);
+    setChk('large_mode_checkbox', ps.large_mode);
+    setChk('compact_mode_checkbox', ps.compact_mode);
+    setChk('show_time_checkbox', ps.show_time ?? true);
+    setChk('show_rank_checkbox', ps.show_rank ?? true);
+    setChk('hide_rank_checkbox', ps.hide_rank);
+    setChk('hide_nickname_checkbox', ps.hide_nickname);
+    setChk('hide_logo_checkbox', ps.hide_logo);
 
-    syncHiddenBool('large_mode','large_mode_checkbox');
-    syncHiddenBool('compact_mode','compact_mode_checkbox');
-    syncHiddenBool('show_time','show_time_checkbox');
-    syncHiddenBool('show_rank','show_rank_checkbox');
-    syncHiddenBool('hide_rank','hide_rank_checkbox');
-    syncHiddenBool('hide_nickname','hide_nickname_checkbox');
-    syncHiddenBool('hide_logo','hide_logo_checkbox');
-
-    const apply = () => {
-      const on = document.getElementById('large_mode_checkbox').checked || document.getElementById('compact_mode_checkbox').checked;
-      applyLargeOrCompact(on);
+    // If Large/Compact checked, show dropdown as Largest
+    if (document.getElementById('large_mode_checkbox').checked || document.getElementById('compact_mode_checkbox').checked) {
+      document.getElementById('font_size').value = 'largest';
     }
-    apply();
 
-    document.getElementById('large_mode_checkbox').addEventListener('change', () => {
-      syncHiddenBool('large_mode','large_mode_checkbox');
-      // keep them mutually exclusive
-      if (document.getElementById('large_mode_checkbox').checked) {
-        document.getElementById('compact_mode_checkbox').checked = false;
-        syncHiddenBool('compact_mode','compact_mode_checkbox');
-      }
-      apply();
-    });
-
-    document.getElementById('compact_mode_checkbox').addEventListener('change', () => {
-      syncHiddenBool('compact_mode','compact_mode_checkbox');
-      if (document.getElementById('compact_mode_checkbox').checked) {
-        document.getElementById('large_mode_checkbox').checked = false;
-        syncHiddenBool('large_mode','large_mode_checkbox');
-      }
-      apply();
-    });
-
-    document.getElementById('show_time_checkbox').addEventListener('change', () => syncHiddenBool('show_time','show_time_checkbox'));
-    document.getElementById('show_rank_checkbox').addEventListener('change', () => syncHiddenBool('show_rank','show_rank_checkbox'));
-    document.getElementById('hide_rank_checkbox').addEventListener('change', () => syncHiddenBool('hide_rank','hide_rank_checkbox'));
-    document.getElementById('hide_nickname_checkbox').addEventListener('change', () => syncHiddenBool('hide_nickname','hide_nickname_checkbox'));
-    document.getElementById('hide_logo_checkbox').addEventListener('change', () => syncHiddenBool('hide_logo','hide_logo_checkbox'));
+    enforceExclusive();
   });
 </script>
