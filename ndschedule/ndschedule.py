@@ -66,8 +66,23 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
+
+
+# --- FORCE LARGE MODE FORMATTING (always) ---
+# We intentionally do NOT enable large_mode because that preset forces target_display.
+# Instead, we hard-force the large-format values while preserving the user's target_display.
+font_size = "largest"
+compact_mode = False
+show_time = True
+show_rank_setting = True
+hide_rank = False
+hide_nickname = False
+hide_logo = False
         # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
+
+        # Large Mode toggle disabled: plugin always uses large-format values above.
+        large_mode = False
         if large_mode:
             font_size = "largest"
             compact_mode = False
