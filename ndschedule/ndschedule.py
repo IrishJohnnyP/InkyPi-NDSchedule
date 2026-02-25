@@ -38,22 +38,21 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """Notre Dame Football schedule (Large Mode ONLY).
+    """Notre Dame Football schedule – LARGE MODE ONLY (Option A).
+
+    This is the same Large-Mode-only build as before, with a single fix:
+    - template_params now includes `plugin_settings` so the base template doesn't error.
 
     Kept settings (Option A):
-      - target_display (auto / 7.3" / 13.3")
-      - season_year (optional)
+      - target_display
+      - season_year
       - cache_minutes
 
-    Always ON (hard-coded):
+    Hard-coded Large Mode behavior:
       - Largest font
-      - Show game time
-      - Show opponent rank (only for current season when a poll is available)
-      - Show nickname, logo, record
-
-    IMPORTANT FIX:
-      - Always pass template param 'plugin_settings' because the base plugin template
-        expects it when rendering (prevents: 'plugin_settings' is undefined).
+      - Show time
+      - Show rank (current season only, when poll exists)
+      - Show logo + nickname + record
     """
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -145,7 +144,7 @@ class NdSchedule(BasePlugin):
             "hide_nickname": hide_nickname,
             "hide_logo": hide_logo,
             "display_class": display_class,
-            "plugin_settings": settings,  # required by base template
+            "plugin_settings": settings,  # FIX: required by base template
         }
 
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
@@ -495,6 +494,58 @@ class NdSchedule(BasePlugin):
 
         return rows
 
+    def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
+        if not opp_team_id or not game_dt_utc:
+            return ""
+        opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
+        events = opp_sched.get("events") or []
+        if not isinstance(events, list):
+            return ""
+        wins = losses = ties = 0
+        for ev in events:
+            if not isinstance(ev, dict):
+                continue
+            ev_dt = self._parse_iso(str(ev.get("date") or ""))
+            if not ev_dt or ev_dt >= game_dt_utc:
+                continue
+            comps = ev.get("competitions")
+            comp = comps[0] if isinstance(comps, list) and comps else ev
+            if not isinstance(comp, dict):
+                continue
+            competitors = comp.get("competitors") or []
+            if not isinstance(competitors, list) or len(competitors) < 2:
+                continue
+            my_side = other_side = None
+            for c in competitors:
+                if not isinstance(c, dict):
+                    continue
+                team = c.get("team") or {}
+                if str(team.get("id")) == str(opp_team_id):
+                    my_side = c
+                else:
+                    other_side = c
+            if not my_side or not other_side:
+                continue
+            my_score = self._safe_int(my_side.get("score"))
+            other_score = self._safe_int(other_side.get("score"))
+            winner_flag = my_side.get("winner")
+            if my_score is None or other_score is None:
+                if isinstance(winner_flag, bool):
+                    wins += 1 if winner_flag else 0
+                    losses += 0 if winner_flag else 1
+                continue
+            if isinstance(winner_flag, bool):
+                wins += 1 if winner_flag else 0
+                losses += 0 if winner_flag else 1
+            else:
+                if my_score > other_score:
+                    wins += 1
+                elif my_score < other_score:
+                    losses += 1
+                else:
+                    ties += 1
+        return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
+
     def _format_game_datetime(self, iso_str: str, show_time: bool = True) -> str:
         from datetime import datetime, timezone
 
@@ -567,55 +618,3 @@ class NdSchedule(BasePlugin):
             return f"{date_part} {hour}:{minute} {ampm}"
         except Exception:
             return ""
-
-    def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
-        if not opp_team_id or not game_dt_utc:
-            return ""
-        opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
-        events = opp_sched.get("events") or []
-        if not isinstance(events, list):
-            return ""
-        wins = losses = ties = 0
-        for ev in events:
-            if not isinstance(ev, dict):
-                continue
-            ev_dt = self._parse_iso(str(ev.get("date") or ""))
-            if not ev_dt or ev_dt >= game_dt_utc:
-                continue
-            comps = ev.get("competitions")
-            comp = comps[0] if isinstance(comps, list) and comps else ev
-            if not isinstance(comp, dict):
-                continue
-            competitors = comp.get("competitors") or []
-            if not isinstance(competitors, list) or len(competitors) < 2:
-                continue
-            my_side = other_side = None
-            for c in competitors:
-                if not isinstance(c, dict):
-                    continue
-                team = c.get("team") or {}
-                if str(team.get("id")) == str(opp_team_id):
-                    my_side = c
-                else:
-                    other_side = c
-            if not my_side or not other_side:
-                continue
-            my_score = self._safe_int(my_side.get("score"))
-            other_score = self._safe_int(other_side.get("score"))
-            winner_flag = my_side.get("winner")
-            if my_score is None or other_score is None:
-                if isinstance(winner_flag, bool):
-                    wins += 1 if winner_flag else 0
-                    losses += 0 if winner_flag else 1
-                continue
-            if isinstance(winner_flag, bool):
-                wins += 1 if winner_flag else 0
-                losses += 0 if winner_flag else 1
-            else:
-                if my_score > other_score:
-                    wins += 1
-                elif my_score < other_score:
-                    losses += 1
-                else:
-                    ties += 1
-        return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
