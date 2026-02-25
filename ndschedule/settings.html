@@ -1,3 +1,21 @@
+<!-- NdSchedule settings – LARGE MODE FORMATTING ONLY (Option A)
+
+User-visible settings:
+- Target display
+- Season year
+- Cache minutes
+
+All other settings are forced (hidden) to match the last-known-good Large Mode formatting:
+- font_size = largest
+- show_time = true
+- show_rank = true
+- hide_rank = false
+- hide_nickname = false
+- hide_logo = false
+- compact_mode = false
+- large_mode = false  (we emulate Large via forced values without triggering preset overrides)
+-->
+
 <div class="form-group">
   <label for="target_display" class="form-label">Target display</label>
   <select class="form-select" id="target_display" name="target_display">
@@ -5,7 +23,7 @@
     <option value="pimoroni_73">Pimoroni Inky Impression 7.3" (800×480)</option>
     <option value="pimoroni_133">Pimoroni Inky Impression 13.3" (1600×1200)</option>
   </select>
-  <small class="form-text text-muted">Large Mode formatting is always used.</small>
+  <small class="form-text text-muted">Large Mode formatting is always used; only the target display can be changed.</small>
 </div>
 
 <div class="form-group mt-3">
@@ -17,6 +35,16 @@
   <label for="cache_minutes" class="form-label">Cache (minutes)</label>
   <input class="form-control" type="number" id="cache_minutes" name="cache_minutes" min="0" max="1440" value="30">
 </div>
+
+<!-- Forced settings (hidden) -->
+<input type="hidden" name="large_mode" value="false" />
+<input type="hidden" name="compact_mode" value="false" />
+<input type="hidden" name="font_size" value="largest" />
+<input type="hidden" name="show_time" value="true" />
+<input type="hidden" name="show_rank" value="true" />
+<input type="hidden" name="hide_rank" value="false" />
+<input type="hidden" name="hide_nickname" value="false" />
+<input type="hidden" name="hide_logo" value="false" />
 
 <script>
   function populateYears() {
@@ -39,6 +67,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     populateYears();
     const ps = (typeof pluginSettings !== 'undefined') ? pluginSettings : {};
+
     document.getElementById('target_display').value = (ps.target_display || 'auto');
     document.getElementById('season_year').value = (ps.season_year || '');
     document.getElementById('cache_minutes').value = (ps.cache_minutes ?? 30);

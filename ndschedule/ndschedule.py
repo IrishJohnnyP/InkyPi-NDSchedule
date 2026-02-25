@@ -54,19 +54,38 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
-        # LARGE MODE ONLY: force the previous working Large Mode behavior.
-        font_size = "largest"
-        compact_mode = False
-        show_time = True
-        show_rank_setting = True
-        hide_rank = False
-        hide_nickname = False
-        hide_logo = False
+        # User-controlled settings
+        font_size = (settings.get("font_size") or "normal").strip().lower()
+        if font_size not in ("normal", "large", "larger", "largest"):
+            font_size = "normal"
+
+        compact_mode = self._to_bool(settings.get("compact_mode", False))
+        show_time = self._to_bool(settings.get("show_time", True))
+        show_rank_setting = self._to_bool(settings.get("show_rank", True))
+        hide_rank = self._to_bool(settings.get("hide_rank", False))
+        hide_nickname = self._to_bool(settings.get("hide_nickname", False))
+        hide_logo = self._to_bool(settings.get("hide_logo", False))
+
+        # Large Mode preset
+        large_mode = self._to_bool(settings.get("large_mode", False))
+        if large_mode:
+            font_size = "largest"
+            compact_mode = False
+            show_time = True
+            show_rank_setting = True
+            hide_rank = False
+            hide_nickname = False
+            hide_logo = False
+            settings["target_display"] = "pimoroni_133"
+
+        # Compact Mode: keep user toggles; just render at 7.3" and set compact_mode True
+        if compact_mode and not large_mode:
+            settings["target_display"] = "pimoroni_73"
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Resolve dimensions (respect user target_display)
+        # Resolve dimensions
         target = str(settings.get("target_display") or "auto").strip().lower()
         if target in ("pimoroni_73", "800x480", "800", "7.3"):
             dims = PIMORONI_73
@@ -130,6 +149,7 @@ class NdSchedule(BasePlugin):
         }
 
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
+
     # ----------------------------
     # HTTP + caching
     # ----------------------------
