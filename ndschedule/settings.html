@@ -1,1 +1,36 @@
-<!-- placeholder -->
+<div class="settings">
+  <h3>Target display</h3>
+  <p>Auto (uses the configured device resolution)</p>
+
+  <h3>Display modes</h3>
+  <ul>
+    <li><strong>Large Mode</strong>: preset for larger panels (Largest font + show everything).</li>
+    <li><strong>Compact mode</strong>: tighter row spacing and reduced padding. Does <em>not</em> change resolution.</li>
+  </ul>
+
+  <h3>Season year</h3>
+  <input type="text" name="season_year" placeholder="e.g., 2026">
+
+  <h3>Font size</h3>
+  <select name="font_size">
+    <option value="normal">Normal</option>
+    <option value="large">Large</option>
+    <option value="larger">Larger</option>
+    <option value="largest">Largest</option>
+  </select>
+  <p><em>Large Mode</em> forces <strong>Largest</strong>.</p>
+
+  <h3>Visibility</h3>
+  <label><input type="checkbox" name="show_time" checked> Show game time</label><br>
+  <label><input type="checkbox" name="show_rank" checked> Show opponent rank (current season only)</label><br>
+  <label><input type="checkbox" name="hide_rank"> Hide rank in list</label><br>
+  <label><input type="checkbox" name="hide_nickname"> Hide nickname in list</label><br>
+  <label><input type="checkbox" name="hide_logo"> Hide opponent logo</label>
+
+  <h3>Modes</h3>
+  <label><input type="checkbox" name="large_mode"> Large Mode</label><br>
+  <label><input type="checkbox" name="compact_mode"> Compact mode</label>
+
+  <h3>Cache</h3>
+  <label>Cache (minutes): <input type="number" min="0" max="1440" step="1" name="cache_minutes" value="30"></label>
+</div>
