@@ -1,8 +1,4 @@
-/* NdSchedule CSS – Auto-scale version
-   - Uses CSS vars --scale and --title-scale passed from Python
-   - No targeted screen-size classes; fluid via dvh/dvw + ch units
-   - Opponent column is flexible; fixed columns use ch widths
-*/
+/* Auto-scale + dominant Opponent column */
 .nd-container{
   width:100%;
   height:100%;
@@ -11,17 +7,23 @@
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600;
   color: inherit;
-  /* Base scale (can be overridden by inline style) */
+
   --scale: 1.08;
   --title-scale: 1.06;
-  /* Column widths */
-  --col-date: 33.5ch;
-  --col-rec: 8ch;
-  --col-site: 11ch;
-  --col-result: 13.25ch;
+  --squeeze: 0; /* 0..0.35 from Python */
+
+  /* Column factors */
+  --date-col-factor: 0.20;   /* reduce Date/Time to 20% (80% smaller) */
+  --rec-col-factor:  0.60;   /* Record ~40% smaller */
+  --site-col-factor: 0.60;   /* Site   ~40% smaller */
+
+  /* Base widths, then apply factors */
+  --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor));
+  --col-rec:    calc((7ch    - (1ch   * var(--squeeze))) * var(--rec-col-factor));
+  --col-site:   calc((9ch    - (2ch   * var(--squeeze))) * var(--site-col-factor));
+  --col-result: calc(11.5ch  - (2.5ch * var(--squeeze)));
 }
 
-/* Font size presets (multiplier overrides) */
 .font-normal { --scale: calc(var(--scale) * 1.00); --title-scale: calc(var(--title-scale) * 1.00); }
 .font-large  { --scale: calc(var(--scale) * 1.10); --title-scale: calc(var(--title-scale) * 1.06); }
 .font-larger { --scale: calc(var(--scale) * 1.22); --title-scale: calc(var(--title-scale) * 1.14); }
@@ -33,8 +35,8 @@
 .title{font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Grid */
-.colhdr,.row{display:grid;grid-template-columns: var(--col-date) minmax(0, 1fr) var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
+/* Grid: Opponent column is dominant (4fr) */
+.colhdr,.row{display:grid;grid-template-columns: var(--col-date) 4fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
@@ -52,13 +54,11 @@
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
-/* Spectra-safe win/loss colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--scale));opacity:.85;}
 
-/* Compact mode tweaks (device-agnostic) */
 .compact{padding:2.2dvh 2.4dvw;}
 .compact .header{margin-bottom:1.2dvh;}
 .compact .row{padding:0.34dvh 0;column-gap:1.1dvw;}
