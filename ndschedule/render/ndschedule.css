@@ -1,47 +1,44 @@
-/* NdSchedule CSS – Auto-scale + Dominant Opponent + Working font presets */
+/* NdSchedule CSS – Font presets fixed + Date column scales with font size */
 
 .nd-container{
-  width:100%;
-  height:100%;
-  box-sizing:border-box;
-  padding:3dvh 3dvw;
+  width:100%; height:100%; box-sizing:border-box; padding:3dvh 3dvw;
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  font-weight:600;
-  color: inherit;
+  font-weight:600; color: inherit;
 
   /* Base device scale from inline style */
-  --base-scale: 1.08;
-  --base-title-scale: 1.06;
+  --base-scale: 1.08;            /* overridden inline */
+  --base-title-scale: 1.06;      /* overridden inline */
 
-  /* Preset multipliers (overridden by .font-* classes) */
+  /* Preset multipliers (set by .font-*) */
   --scale-mult: 1.00;
   --title-scale-mult: 1.00;
+  --date-scale-mult: 1.00;       /* NEW: widen Date for larger fonts */
 
   /* Effective scales */
   --eff-scale: calc(var(--base-scale) * var(--scale-mult));
   --eff-title-scale: calc(var(--base-title-scale) * var(--title-scale-mult));
 
-  /* Auto-squeeze from Python when short edge is small (0..0.35) */
+  /* Auto-squeeze (0..0.35) from Python */
   --squeeze: 0;
 
-  /* Column size factors */
-  --date-col-factor: 0.338;  /* Date/Time increased by 30% from prior 0.26 */
+  /* Column factors */
+  --date-col-factor: 0.338;  /* Date/Time width baseline factor */
   --rec-col-factor:  0.60;   /* ~40% smaller */
   --site-col-factor: 0.60;   /* ~40% smaller */
   --result-col-factor: 0.50; /* 50% smaller */
 
-  /* Fixed columns after squeeze, scaled by factors */
-  --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor));
+  /* Fixed columns after squeeze × factors × date font multiplier */
+  --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor) * var(--date-scale-mult));
   --col-rec:    calc((7ch    - (1ch   * var(--squeeze))) * var(--rec-col-factor));
   --col-site:   calc((9ch    - (2ch   * var(--squeeze))) * var(--site-col-factor));
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor));
 }
 
-/* Font presets tweak multipliers only */
-.font-normal { --scale-mult: 1.00; --title-scale-mult: 1.00; }
-.font-large  { --scale-mult: 1.10; --title-scale-mult: 1.06; }
-.font-larger { --scale-mult: 1.22; --title-scale-mult: 1.14; }
-.font-largest{ --scale-mult: 1.36; --title-scale-mult: 1.22; }
+/* Font preset classes control multipliers only */
+.font-normal { --scale-mult: 1.00; --title-scale-mult: 1.00; --date-scale-mult: 1.00; }
+.font-large  { --scale-mult: 1.10; --title-scale-mult: 1.06; --date-scale-mult: 1.12; }
+.font-larger { --scale-mult: 1.22; --title-scale-mult: 1.14; --date-scale-mult: 1.24; }
+.font-largest{ --scale-mult: 1.36; --title-scale-mult: 1.22; --date-scale-mult: 1.38; }
 
 /* Header */
 .header{display:flex;flex-direction:column;gap:0.6dvh;margin-bottom:1.8dvh;}
@@ -50,7 +47,7 @@
 .title{font-size:calc(min(4.0dvh,4.0dvw) * var(--eff-title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--eff-scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Grid */
+/* Grid: Opponent gets remaining width via 4fr */
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 4fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--eff-scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
@@ -69,13 +66,13 @@
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
-/* Spectra-safe win/loss colors */
+/* Win/loss colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--eff-scale));opacity:.85;}
 
-/* Compact mode tweaks */
+/* Compact mode */
 .compact{padding:2.2dvh 2.4dvw;}
 .compact .header{margin-bottom:1.2dvh;}
 .compact .row{padding:0.34dvh 0;column-gap:1.1dvw;}
