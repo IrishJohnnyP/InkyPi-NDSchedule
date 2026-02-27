@@ -5,8 +5,7 @@
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600; color: inherit;
 
-  --base-scale: 1.08;           /* overridden inline from Python */
-  --base-title-scale: 1.06;     /* overridden inline from Python */
+  --base-scale: 1.08; --base-title-scale: 1.06;
 
   /* Preset multipliers (set by .font-*) */
   --scale-mult: 1.00;
@@ -46,7 +45,7 @@
 .title{font-size:calc(min(4.0dvh,4.0dvw) * var(--eff-title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--eff-scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Grid: Opponent column is fractional to absorb space */
+/* Grid */
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 4fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--eff-scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
