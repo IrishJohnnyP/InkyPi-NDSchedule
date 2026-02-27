@@ -1,15 +1,10 @@
 <div class="settings">
-  <h3>Target display</h3>
-  <p>Auto (uses the configured device resolution)</p>
-
-  <h3>Display modes</h3>
-  <ul>
-    <li><strong>Large Mode</strong>: preset for larger panels (Largest font + show everything).</li>
-    <li><strong>Compact mode</strong>: tighter row spacing and reduced padding. Does <em>not</em> change resolution.</li>
-  </ul>
-
   <h3>Season year</h3>
-  <input type="text" name="season_year" placeholder="e.g., 2026">
+  <select name="season_year" id="season_year">
+    {% for y in years %}
+      <option value="{{ y }}">{{ y }}</option>
+    {% endfor %}
+  </select>
 
   <h3>Font size</h3>
   <select name="font_size">
@@ -18,7 +13,6 @@
     <option value="larger">Larger</option>
     <option value="largest">Largest</option>
   </select>
-  <p><em>Large Mode</em> forces <strong>Largest</strong>.</p>
 
   <h3>Visibility</h3>
   <label><input type="checkbox" name="show_time" checked> Show game time</label><br>
@@ -34,3 +28,41 @@
   <h3>Cache</h3>
   <label>Cache (minutes): <input type="number" min="0" max="1440" step="1" name="cache_minutes" value="30"></label>
 </div>
+<script>
+  // Preselect fields when editing an existing playlist item
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof loadPluginSettings !== 'undefined' && loadPluginSettings) {
+      const selYear = document.getElementById('season_year');
+      const chosenYear = (pluginSettings && pluginSettings.season_year) ? String(pluginSettings.season_year) : '';
+      if (selYear) {
+        let found = false;
+        for (const opt of selYear.options) {
+          if (opt.value === chosenYear) { opt.selected = true; found = true; break; }
+        }
+        if (!found) {
+          // Default to current_year if present
+          const currentDefault = '{{ current_year }}';
+          for (const opt of selYear.options) {
+            if (opt.value === currentDefault) { opt.selected = true; break; }
+          }
+        }
+      }
+      // Font size
+      if (pluginSettings && pluginSettings.font_size) {
+        const fsSel = document.querySelector('select[name="font_size"]');
+        if (fsSel) fsSel.value = String(pluginSettings.font_size);
+      }
+      // Checkboxes
+      const checks = ["show_time","show_rank","hide_rank","hide_nickname","hide_logo","large_mode","compact_mode"];
+      for (const key of checks) {
+        const el = document.querySelector(`input[name="${key}"]`);
+        if (el) el.checked = !!pluginSettings[key];
+      }
+      // Cache
+      if (pluginSettings && typeof pluginSettings.cache_minutes !== 'undefined') {
+        const cm = document.querySelector('input[name="cache_minutes"]');
+        if (cm) cm.value = String(pluginSettings.cache_minutes);
+      }
+    }
+  });
+</script>
