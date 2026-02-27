@@ -1,1 +1,1 @@
-.nd-container{--date-col-factor:0.338} .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);}
+.nd-container{font-family:sans-serif}
