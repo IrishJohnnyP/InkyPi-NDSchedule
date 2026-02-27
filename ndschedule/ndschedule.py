@@ -36,7 +36,6 @@ class NdSchedule(BasePlugin):
     def generate_settings_template(self):
         params = super().generate_settings_template()
         params["style_settings"] = True
-        # provide years for dropdown (current…current-9)
         try:
             current_year = self._detect_current_season_year(ttl=0)
         except Exception:
@@ -124,7 +123,7 @@ class NdSchedule(BasePlugin):
         }
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
-    # ------------ HTTP + cache helpers ------------
+    # ---------- HTTP + caching ----------
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time(); ts = self._cache["ts"].get(url, 0.0)
         if ttl > 0 and url in self._cache["data"] and (now - ts) < ttl:
@@ -186,26 +185,22 @@ class NdSchedule(BasePlugin):
         except Exception:
             return {}
 
-    # ---------------- Utilities -----------------
+    # ---------- Utilities ----------
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
-            if v is None:
-                return None
-            if isinstance(v, (int, float)):
-                return int(v)
-            if isinstance(v, dict):
-                for k in ("value", "displayValue", "score"):
+            if v is None: return None
+            if isinstance(v,(int,float)): return int(v)
+            if isinstance(v,dict):
+                for k in ("value","displayValue","score"):
                     if v.get(k) is not None:
                         return self._safe_int(v.get(k))
                 return None
-            if isinstance(v, list) and v:
+            if isinstance(v,list) and v:
                 return self._safe_int(v[0])
-            if isinstance(v, str):
-                s = v.strip()
-                if not s:
-                    return None
-                if s.isdigit() or (s.startswith("-") and s[1:].isdigit()):
-                    return int(s)
+            if isinstance(v,str):
+                s=v.strip()
+                if not s: return None
+                if s.isdigit() or (s.startswith('-') and s[1:].isdigit()): return int(s)
                 return int(float(s))
         except Exception:
             return None
@@ -213,27 +208,20 @@ class NdSchedule(BasePlugin):
 
     def _parse_iso(self, iso_str: str):
         from datetime import datetime
-        if not iso_str:
-            return None
-        try:
-            return datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
-        except Exception:
-            return None
+        if not iso_str: return None
+        try: return datetime.fromisoformat(iso_str.replace("Z","+00:00"))
+        except Exception: return None
 
     def _is_finalish(self, comp: Dict[str, Any]) -> bool:
-        if not isinstance(comp, dict):
-            return False
+        if not isinstance(comp, dict): return False
         st = (comp.get("status") or {}).get("type") or {}
         if isinstance(st, dict):
-            if st.get("completed") is True:
-                return True
-            if str(st.get("state") or "").lower() == "post":
-                return True
-            for k in ("name", "detail", "shortDetail", "description"):
-                val = str(st.get(k) or "")
-                if val.upper().startswith("FINAL") or val.upper().startswith("STATUS_FINAL"):
-                    return True
-        return str(comp.get("status") or "").lower() in ("final", "post")
+            if st.get("completed") is True: return True
+            if str(st.get("state") or "").lower()=="post": return True
+            for k in ("name","detail","shortDetail","description"):
+                val=str(st.get(k) or "")
+                if val.upper().startswith("FINAL") or val.upper().startswith("STATUS_FINAL"): return True
+        return str(comp.get("status") or "").lower() in ("final","post")
 
     def _eastern_tz(self):
         try:
@@ -243,11 +231,7 @@ class NdSchedule(BasePlugin):
             return None
 
     def _choose_school(self, team: Dict[str, Any], meta: Dict[str, Any]) -> str:
-        for c in (
-            team.get("shortDisplayName"), team.get("location"), team.get("displayName"), team.get("abbreviation"),
-            meta.get("shortDisplayName"), meta.get("location"), meta.get("displayName"), meta.get("abbreviation"),
-            team.get("name"), meta.get("name"),
-        ):
+        for c in (team.get("shortDisplayName"), team.get("location"), team.get("displayName"), team.get("abbreviation"), meta.get("shortDisplayName"), meta.get("location"), meta.get("displayName"), meta.get("abbreviation"), team.get("name"), meta.get("name")):
             if isinstance(c, str) and c.strip():
                 return c.strip()
         return "Unknown"
@@ -263,35 +247,24 @@ class NdSchedule(BasePlugin):
             return ""
         opp_sched = self._fetch_schedule_for_year(int(opp_team_id), season_year, ttl)
         events = opp_sched.get("events") or []
-        if not isinstance(events, list):
-            return ""
+        if not isinstance(events, list): return ""
         wins = losses = ties = 0
         for ev in events:
-            if not isinstance(ev, dict):
-                continue
+            if not isinstance(ev, dict): continue
             ev_dt = self._parse_iso(str(ev.get("date") or ""))
-            if not ev_dt or ev_dt >= game_dt_utc:
-                continue
-            comps = ev.get("competitions")
-            comp = comps[0] if isinstance(comps, list) and comps else ev
-            if not isinstance(comp, dict):
-                continue
+            if not ev_dt or ev_dt >= game_dt_utc: continue
+            comps = ev.get("competitions"); comp = comps[0] if isinstance(comps, list) and comps else ev
+            if not isinstance(comp, dict): continue
             competitors = comp.get("competitors") or []
-            if not isinstance(competitors, list) or len(competitors) < 2:
-                continue
+            if not isinstance(competitors, list) or len(competitors) < 2: continue
             my_side = other_side = None
             for c in competitors:
-                if not isinstance(c, dict):
-                    continue
+                if not isinstance(c, dict): continue
                 team = c.get("team") or {}
-                if str(team.get("id")) == str(opp_team_id):
-                    my_side = c
-                else:
-                    other_side = c
-            if not my_side or not other_side:
-                continue
-            my_score = self._safe_int(my_side.get("score"))
-            other_score = self._safe_int(other_side.get("score"))
+                if str(team.get("id")) == str(opp_team_id): my_side = c
+                else: other_side = c
+            if not my_side or not other_side: continue
+            my_score = self._safe_int(my_side.get("score")); other_score = self._safe_int(other_side.get("score"))
             winner_flag = my_side.get("winner")
             if my_score is None or other_score is None:
                 if isinstance(winner_flag, bool):
@@ -302,12 +275,9 @@ class NdSchedule(BasePlugin):
                 wins += 1 if winner_flag else 0
                 losses += 0 if winner_flag else 1
             else:
-                if my_score > other_score:
-                    wins += 1
-                elif my_score < other_score:
-                    losses += 1
-                else:
-                    ties += 1
+                if my_score > other_score: wins += 1
+                elif my_score < other_score: losses += 1
+                else: ties += 1
         return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
 
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
@@ -335,31 +305,46 @@ class NdSchedule(BasePlugin):
             n = norm(p.get("name")); return "playoff selection committee" in n or "cfp" in norm(p.get("shortName"))
         def is_ap(p: Dict[str, Any]) -> bool:
             t = norm(p.get("type"))
-            if t == "ap": return True
+            if t=="ap": return True
             n = norm(p.get("name")); s = norm(p.get("shortName"))
             return ("ap" in s) or ("ap top" in n)
-        cfp = [p for p in polls if isinstance(p, dict) and is_cfp(p)]
-        ap  = [p for p in polls if isinstance(p, dict) and is_ap(p)]
+        cfp=[p for p in polls if isinstance(p, dict) and is_cfp(p)]; ap=[p for p in polls if isinstance(p, dict) and is_ap(p)]
         cfp.sort(key=poll_epoch, reverse=True); ap.sort(key=poll_epoch, reverse=True)
         poll = cfp[0] if cfp else (ap[0] if ap else None)
         if not poll: return {}, "", ""
         label = (poll.get("shortName") or poll.get("name") or "").strip()
         updated_fmt = self._format_iso_datetime(poll_iso(poll))
-        ranks = poll.get("ranks")
-        if isinstance(ranks, dict):
-            ranks = ranks.get("items") or ranks.get("entries") or ranks.get("ranks")
-        if not isinstance(ranks, list):
-            ranks = poll.get("entries") or []
-        if not isinstance(ranks, list):
-            ranks = []
+        ranks = poll.get("ranks");
+        if isinstance(ranks, dict): ranks = ranks.get("items") or ranks.get("entries") or ranks.get("ranks")
+        if not isinstance(ranks, list): ranks = poll.get("entries") or []
+        if not isinstance(ranks, list): ranks = []
         rank_map: Dict[str,int] = {}
         for r in ranks:
             if not isinstance(r, dict): continue
-            rk = r.get("current") or r.get("rank") or r.get("position")
-            team = r.get("team") or {}; tid = team.get("id")
+            rk = r.get("current") or r.get("rank") or r.get("position"); team = r.get("team") or {}; tid = team.get("id")
             try:
-                if tid is not None and rk is not None:
-                    rank_map[str(tid)] = int(rk)
+                if tid is not None and rk is not None: rank_map[str(tid)] = int(rk)
             except Exception: pass
-        rank_map = {k:v for k,v in rank_map.items() if 1 <= v <= 25}
+        rank_map = {k:v for k,v in rank_map.items() if 1<=v<=25}
         return rank_map, label, updated_fmt
+
+    def _to_bool(self, v: Any) -> bool:
+        """Robust truthy parsing for settings coming from forms."""
+        if isinstance(v, bool):
+            return v
+        if v is None:
+            return False
+        if isinstance(v, (list, tuple)):
+            if not v:
+                return False
+            v = v[-1]
+        if isinstance(v, (int, float)):
+            return v != 0
+        if isinstance(v, str):
+            s = v.strip().lower()
+            if s in ("1","true","yes","on","checked","y","t"):
+                return True
+            if s in ("0","false","no","off","","n","f"):
+                return False
+            return True
+        return bool(v)

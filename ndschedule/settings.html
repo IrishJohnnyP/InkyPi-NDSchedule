@@ -29,7 +29,6 @@
   <label>Cache (minutes): <input type="number" min="0" max="1440" step="1" name="cache_minutes" value="30"></label>
 </div>
 <script>
-  // Preselect on edit
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadPluginSettings !== 'undefined' && loadPluginSettings) {
       const selYear = document.getElementById('season_year');
@@ -44,7 +43,7 @@
           for (const opt of selYear.options) { if (opt.value === currentDefault) { opt.selected = true; break; } }
         }
       }
-      // Font size preset
+      // Font size
       if (pluginSettings && pluginSettings.font_size) {
         const fsSel = document.querySelector('select[name="font_size"]');
         if (fsSel) fsSel.value = String(pluginSettings.font_size);
