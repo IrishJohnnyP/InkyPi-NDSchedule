@@ -15,6 +15,7 @@ RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-f
 LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football?lang=en&region=us"
 ND_LOGO_URL = "https://a.espncdn.com/i/teamlogos/ncaa/500/87.png"
 
+
 def _ensure_icon_file():
     try:
         here = Path(__file__).resolve().parent
@@ -28,7 +29,9 @@ def _ensure_icon_file():
     except Exception:
         return
 
+
 _ensure_icon_file()
+
 
 class NdSchedule(BasePlugin):
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
@@ -46,6 +49,7 @@ class NdSchedule(BasePlugin):
         return params
 
     def generate_image(self, settings: Dict[str, Any], device_config):
+        # Font preset
         font_size = (settings.get("font_size") or "normal").strip().lower()
         if font_size not in ("normal", "large", "larger", "largest"):
             font_size = "normal"
@@ -56,6 +60,12 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
+        # Scale mode: contain (fit inside) or cover (fill, crop if needed)
+        scale_mode = (settings.get("scale_mode") or "contain").strip().lower()
+        if scale_mode not in ("contain", "cover", "width", "height"):
+            scale_mode = "contain"
+
+        # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
             font_size = "largest"
@@ -69,7 +79,7 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Dimensions
+        # Display dims
         dims = device_config.get_resolution()
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
@@ -78,25 +88,27 @@ class NdSchedule(BasePlugin):
         except Exception:
             w, h = 800, 480
 
-        # Auto scale (typographic)
-        try:
-            short_edge = min(w, h)
-        except Exception:
-            short_edge = 480
+        # Baseline design size (fixed)
+        BASE_W, BASE_H = 800, 480
+
+        # Internal typography scale (kept for intra-layout balance)
+        short_edge = min(w, h)
         scale = max(0.90, min(1.65, short_edge / 480.0))
         title_scale = 0.96 + (scale - 1.0) * 0.55
-
-        # Column squeeze for tight screens
         squeeze = 0.0 if short_edge >= 700 else max(0.0, min(0.35, (700 - short_edge) / 700.0 * 0.35))
 
-        # Whole‑output scale (bullet‑proof): compare to baseline canvas
-        BASE_W, BASE_H = 800, 480
-        try:
-            output_scale = min(h / BASE_H if BASE_H else 1.0,
-                               w / BASE_W if BASE_W else 1.0)
-        except Exception:
-            output_scale = 1.0
-        output_scale = max(0.60, min(2.00, output_scale))
+        # Whole-output scale (fixed-base approach)
+        sx = w / BASE_W if BASE_W else 1.0
+        sy = h / BASE_H if BASE_H else 1.0
+        if scale_mode == "cover":
+            output_scale = max(sx, sy)
+        elif scale_mode == "width":
+            output_scale = sx
+        elif scale_mode == "height":
+            output_scale = sy
+        else:
+            output_scale = min(sx, sy)
+        output_scale = max(0.10, min(5.00, output_scale))
 
         # Season year
         current_year = self._detect_current_season_year(ttl)
@@ -106,7 +118,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
-        # Data fetch
+        # Data
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
@@ -139,12 +151,16 @@ class NdSchedule(BasePlugin):
             "auto_scale": f"{scale:.3f}",
             "auto_title_scale": f"{title_scale:.3f}",
             "auto_squeeze": f"{squeeze:.3f}",
+            # fixed-base scaling
+            "base_w": BASE_W,
+            "base_h": BASE_H,
             "output_scale": f"{output_scale:.4f}",
+            "scale_mode": scale_mode,
             "plugin_settings": settings,
         }
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
-    # --- helpers: network/cache ---
+    # ------------ HTTP helpers -------------
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time(); ts = self._cache["ts"].get(url, 0.0)
         if ttl > 0 and url in self._cache["data"] and (now - ts) < ttl:
@@ -205,7 +221,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             return {}
 
-    # --- build rows ---
+    # ------------- Build rows --------------
     def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list): events = []
@@ -254,7 +270,7 @@ class NdSchedule(BasePlugin):
             })
         return rows
 
-    # --- rankings ---
+    # --------------- Rankings ---------------
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
         polls = data.get("rankings")
@@ -282,7 +298,7 @@ class NdSchedule(BasePlugin):
             n = norm(p.get("name")); s = norm(p.get("shortName"))
             return ("ap" in s) or ("ap top" in n)
         cfp = [p for p in polls if isinstance(p, dict) and is_cfp(p)]
-        ap = [p for p in polls if isinstance(p, dict) and is_ap(p)]
+        ap  = [p for p in polls if isinstance(p, dict) and is_ap(p)]
         cfp.sort(key=poll_epoch, reverse=True); ap.sort(key=poll_epoch, reverse=True)
         poll = cfp[0] if cfp else (ap[0] if ap else None)
         if not poll: return {}, "", ""
@@ -292,71 +308,17 @@ class NdSchedule(BasePlugin):
         if isinstance(ranks, dict): ranks = ranks.get("items") or ranks.get("entries") or ranks.get("ranks")
         if not isinstance(ranks, list): ranks = poll.get("entries") or []
         if not isinstance(ranks, list): ranks = []
-        rank_map: Dict[str, int] = {}
+        rank_map: Dict[str,int] = {}
         for r in ranks:
             if not isinstance(r, dict): continue
-            rk = r.get("current") or r.get("rank") or r.get("position")
-            team = r.get("team") or {}
-            tid = team.get("id")
+            rk = r.get("current") or r.get("rank") or r.get("position"); team = r.get("team") or {}; tid = team.get("id")
             try:
-                if tid is not None and rk is not None:
-                    rank_map[str(tid)] = int(rk)
+                if tid is not None and rk is not None: rank_map[str(tid)] = int(rk)
             except Exception: pass
-        rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
+        rank_map = {k:v for k,v in rank_map.items() if 1<=v<=25}
         return rank_map, label, updated_fmt
 
-    # --- formatting ---
-    def _format_game_datetime(self, iso_str: str, show_time: bool=True) -> str:
-        from datetime import datetime, timezone
-        if not iso_str: return "TBD"
-        tzinfo = self._eastern_tz()
-        try:
-            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
-            if dt.tzinfo is None: dt = dt.replace(tzinfo=timezone.utc)
-            dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime("%b %d")
-            if not show_time: return date_part
-            hour = dt_local.strftime("%I").lstrip("0") or "12"; minute = dt_local.strftime("%M"); ampm = dt_local.strftime("%p")
-            return f"{date_part} / {hour}:{minute} {ampm}"
-        except Exception:
-            return iso_str[:10]
-
-    def _format_iso_datetime(self, iso_str: str) -> str:
-        from datetime import datetime, timezone
-        if not iso_str: return ""
-        tzinfo = self._eastern_tz()
-        try:
-            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
-            if dt.tzinfo is None: dt = dt.replace(tzinfo=timezone.utc)
-            dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime("%b %d, %Y"); hour = dt_local.strftime("%I").lstrip("0") or "12"; minute = dt_local.strftime("%M"); ampm = dt_local.strftime("%p")
-            return f"{date_part} {hour}:{minute} {ampm}"
-        except Exception:
-            return iso_str
-
-    def _format_updated(self, data: Dict[str, Any]) -> str:
-        date_str = None
-        for k in ("timestamp","lastUpdated","date","updateDate"):
-            v = data.get(k)
-            if v: date_str = str(v); break
-        if not date_str: return ""
-        from datetime import datetime, timezone
-        tzinfo = self._eastern_tz()
-        try:
-            if date_str.isdigit() and len(date_str) >= 12:
-                dt = datetime.fromtimestamp(int(date_str)/1000, tz=timezone.utc)
-            elif date_str.isdigit():
-                dt = datetime.fromtimestamp(int(date_str), tz=timezone.utc)
-            else:
-                dt = datetime.fromisoformat(date_str.replace("Z","+00:00"))
-            if dt.tzinfo is None: dt = dt.replace(tzinfo=timezone.utc)
-            dt_local = dt.astimezone(tzinfo) if tzinfo else dt.astimezone()
-            date_part = dt_local.strftime("%b %d, %Y"); hour = dt_local.strftime("%I").lstrip("0") or "12"; minute = dt_local.strftime("%M"); ampm = dt_local.strftime("%p")
-            return f"{date_part} {hour}:{minute} {ampm}"
-        except Exception:
-            return ""
-
-    # --- misc ---
+    # --------------- Misc ---------------
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
             if v is None: return None
@@ -398,13 +360,16 @@ class NdSchedule(BasePlugin):
         except Exception: return None
 
     def _choose_school(self, team: Dict[str, Any], meta: Dict[str, Any]) -> str:
-        for c in (team.get("shortDisplayName"),team.get("location"),team.get("displayName"),team.get("abbreviation"),meta.get("shortDisplayName"),meta.get("location"),meta.get("displayName"),meta.get("abbreviation"),team.get("name"),meta.get("name")):
-            if isinstance(c,str) and c.strip(): return c.strip()
+        for c in (team.get("shortDisplayName"), team.get("location"), team.get("displayName"), team.get("abbreviation"),
+                  meta.get("shortDisplayName"), meta.get("location"), meta.get("displayName"), meta.get("abbreviation"),
+                  team.get("name"), meta.get("name")):
+            if isinstance(c, str) and c.strip(): return c.strip()
         return "Unknown"
 
     def _nickname_v22(self, team: Dict[str, Any], school: str) -> str:
-        nickname=(team.get("name") or team.get("nickname") or "").strip()
-        if nickname and nickname.lower() not in str(school).lower(): return nickname
+        nickname = (team.get("name") or team.get("nickname") or "").strip()
+        if nickname and nickname.lower() not in str(school).lower():
+            return nickname
         return ""
 
     def _opponent_pregame_record(self, opp_team_id: int, season_year: int, game_dt_utc, ttl: int) -> str:
@@ -447,10 +412,10 @@ class NdSchedule(BasePlugin):
     def _to_bool(self, v: Any) -> bool:
         if isinstance(v, bool): return v
         if v is None: return False
-        if isinstance(v,(list,tuple)) and v: v=v[-1]
-        if isinstance(v,(int,float)): return v != 0
-        if isinstance(v,str):
-            s=v.strip().lower()
+        if isinstance(v, (list, tuple)) and v: v = v[-1]
+        if isinstance(v, (int, float)): return v != 0
+        if isinstance(v, str):
+            s = v.strip().lower()
             if s in ("1","true","yes","on","checked","y","t"): return True
             if s in ("0","false","no","off","","n","f"): return False
             return True

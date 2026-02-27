@@ -8,10 +8,18 @@
 
   <h3>Font size</h3>
   <select name="font_size">
-    <option value="normal">Normal</option>
-    <option value="large">Large</option>
-    <option value="larger">Larger</option>
-    <option value="largest">Largest</option>
+    <option value="normal">Normal (+20%)</option>
+    <option value="large">Large (+20%)</option>
+    <option value="larger">Larger (+20%)</option>
+    <option value="largest">Largest (+20%)</option>
+  </select>
+
+  <h3>Scaling mode</h3>
+  <select name="scale_mode">
+    <option value="contain">Contain (no crop)</option>
+    <option value="cover">Cover (fills, may crop)</option>
+    <option value="width">Match width</option>
+    <option value="height">Match height</option>
   </select>
 
   <h3>Visibility</h3>
@@ -31,6 +39,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadPluginSettings !== 'undefined' && loadPluginSettings) {
+      // Preselects
       const selYear = document.getElementById('season_year');
       const chosenYear = (pluginSettings && pluginSettings.season_year) ? String(pluginSettings.season_year) : '';
       if (selYear) {
@@ -46,6 +55,10 @@
       if (pluginSettings && pluginSettings.font_size) {
         const fsSel = document.querySelector('select[name="font_size"]');
         if (fsSel) fsSel.value = String(pluginSettings.font_size);
+      }
+      if (pluginSettings && pluginSettings.scale_mode) {
+        const smSel = document.querySelector('select[name="scale_mode"]');
+        if (smSel) smSel.value = String(pluginSettings.scale_mode);
       }
       const checks = ["show_time","show_rank","hide_rank","hide_nickname","hide_logo","large_mode","compact_mode"];
       for (const key of checks) { const el = document.querySelector(`input[name="${key}"]`); if (el) el.checked = !!pluginSettings[key]; }
