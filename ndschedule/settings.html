@@ -29,7 +29,7 @@
   <label>Cache (minutes): <input type="number" min="0" max="1440" step="1" name="cache_minutes" value="30"></label>
 </div>
 <script>
-  // Preselect fields when editing an existing playlist item
+  // Preselect on edit
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadPluginSettings !== 'undefined' && loadPluginSettings) {
       const selYear = document.getElementById('season_year');
@@ -40,24 +40,18 @@
           if (opt.value === chosenYear) { opt.selected = true; found = true; break; }
         }
         if (!found) {
-          // Default to current_year if present
           const currentDefault = '{{ current_year }}';
-          for (const opt of selYear.options) {
-            if (opt.value === currentDefault) { opt.selected = true; break; }
-          }
+          for (const opt of selYear.options) { if (opt.value === currentDefault) { opt.selected = true; break; } }
         }
       }
-      // Font size
+      // Font size preset
       if (pluginSettings && pluginSettings.font_size) {
         const fsSel = document.querySelector('select[name="font_size"]');
         if (fsSel) fsSel.value = String(pluginSettings.font_size);
       }
       // Checkboxes
       const checks = ["show_time","show_rank","hide_rank","hide_nickname","hide_logo","large_mode","compact_mode"];
-      for (const key of checks) {
-        const el = document.querySelector(`input[name="${key}"]`);
-        if (el) el.checked = !!pluginSettings[key];
-      }
+      for (const key of checks) { const el = document.querySelector(`input[name="${key}"]`); if (el) el.checked = !!pluginSettings[key]; }
       // Cache
       if (pluginSettings && typeof pluginSettings.cache_minutes !== 'undefined') {
         const cm = document.querySelector('input[name="cache_minutes"]');
