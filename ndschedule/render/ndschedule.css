@@ -1,10 +1,10 @@
 /* NdSchedule CSS – Auto-scale + Dominant Opponent column
-   - Auto-scaling through --scale / --title-scale, passed from Python
-   - Device-agnostic column 'squeeze' (0..0.35) helps Opponent on tight screens
-   - Date/Time +30% (factor 0.26 from the previously reduced baseline)
-   - Record & Site ~40% smaller (0.60)
-   - Result -50% (0.50)
-   - Opponent column soaks up remaining width via 4fr
+   - Auto-scaling through --scale / --title-scale (injected from Python)
+   - Squeeze (0..0.35) helps redistribute space on narrow screens
+   - Date/Time column increased 30% → --date-col-factor: 0.338
+   - Record & Site ~40% smaller
+   - Result column 50% smaller
+   - Opponent column absorbs free space via 4fr
 */
 
 .nd-container{
@@ -16,112 +16,170 @@
   font-weight:600;
   color: inherit;
 
-  /* Base scale (overridden by inline style from Python) */
+  /* Auto scaling (overridden per device by inline style) */
   --scale: 1.08;
   --title-scale: 1.06;
 
-  /* Column squeeze (0..0.35; higher = more room for Opponent) */
-  --squeeze: 0; /* set by Python when screen is tight */
+  /* Auto-squeeze: from Python when screen height/width is tight */
+  --squeeze: 0;
 
-  /* Column factors
-     - Date/Time: +30% vs its reduced baseline (0.20 → 0.26)
-     - Record/Site: ~40% smaller
-     - Result: 50% smaller
-  */
-  --date-col-factor: 0.26;
-  --rec-col-factor:  0.60;
-  --site-col-factor: 0.60;
-  --result-col-factor: 0.50;
+  /* Column size factors */
+  --date-col-factor: 0.338;  /* NEW: 30% larger than previous 0.26 */
+  --rec-col-factor:  0.60;   /* 40% reduction */
+  --site-col-factor: 0.60;   /* 40% reduction */
+  --result-col-factor: 0.50; /* 50% reduction */
 
-  /* Base column widths (in ch), minus squeeze, then scaled by factors
-     Opponent is the flexible column via grid fraction (see grid below).
-  */
+  /* Base widths (in ch), minus squeeze, multiplied by factors */
   --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor));
   --col-rec:    calc((7ch    - (1ch   * var(--squeeze))) * var(--rec-col-factor));
   --col-site:   calc((9ch    - (2ch   * var(--squeeze))) * var(--site-col-factor));
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor));
 }
 
-/* Optional font presets (multipliers stack with inline --scale / --title-scale) */
+/* Font presets */
 .font-normal { --scale: calc(var(--scale) * 1.00); --title-scale: calc(var(--title-scale) * 1.00); }
 .font-large  { --scale: calc(var(--scale) * 1.10); --title-scale: calc(var(--title-scale) * 1.06); }
 .font-larger { --scale: calc(var(--scale) * 1.22); --title-scale: calc(var(--title-scale) * 1.14); }
 .font-largest{ --scale: calc(var(--scale) * 1.36); --title-scale: calc(var(--title-scale) * 1.22); }
 
 /* Header */
-.header{display:flex;flex-direction:column;gap:0.6dvh;margin-bottom:1.8dvh;}
-.titlewrap{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
+.header{
+  display:flex;
+  flex-direction:column;
+  gap:0.6dvh;
+  margin-bottom:1.8dvh;
+}
+.titlewrap{
+  display:flex;
+  align-items:center;
+  gap:1.2dvw;
+  min-width:0;
+}
 .title-logo{
   width:calc(min(3.2dvh,3.2dvw) * var(--scale));
   height:calc(min(3.2dvh,3.2dvw) * var(--scale));
   object-fit:contain;
-  image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;
+  image-rendering:-webkit-optimize-contrast;
+  image-rendering:crisp-edges;
 }
 .title{
   font-size:calc(min(4.0dvh,4.0dvw) * var(--title-scale));
-  font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-weight:850;
+  line-height:1.1;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .update-line{
   font-size:calc(min(1.75dvh,1.75dvw) * var(--scale));
-  opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:.85;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
-/* Grid:
-   - Opponent column uses fractional width (4fr) to absorb freed space
-   - Other columns use fixed ch-based tracks controlled by factors above
-*/
-.colhdr,.row{
+/* Grid: Opponent column uses wide flex track (4fr) */
+.colhdr, .row{
   display:grid;
-  grid-template-columns: var(--col-date) 4fr var(--col-rec) var(--col-site) var(--col-result);
+  grid-template-columns:
+    var(--col-date)
+    4fr                 /* Opponent flexible track */
+    var(--col-rec)
+    var(--col-site)
+    var(--col-result);
   align-items:center;
   column-gap:1.4dvw;
 }
-.colhdr{padding:0.30dvh 0 0.26dvh 0;}
+
+.colhdr{
+  padding:0.30dvh 0 0.26dvh 0;
+}
 .colhdr .h{
   font-size:calc(min(1.40dvh,1.40dvw) * var(--scale));
-  font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;
+  font-weight:900;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  text-align:center;
+  white-space:nowrap;
 }
-.colhdr .h:nth-child(3){ /* "RECORD" header alignment tweak */
-  text-align:left;padding-left:0.25ch;
+.colhdr .h:nth-child(3){
+  text-align:left;
+  padding-left:0.25ch;
 }
-.sep{height:1px;background: currentColor;width:100%;opacity:.22;}
-.row{padding:0.52dvh 0;}
 
-/* Cells */
+.sep{
+  height:1px;
+  background: currentColor;
+  width:100%;
+  opacity:.22;
+}
+
+.row{
+  padding:0.52dvh 0;
+}
+
+/* Cell Styles */
 .date{
   font-weight:760;
   font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
-.opp{display:flex;align-items:center;gap:1.0dvw;min-width:0;}
+
+.opp{
+  display:flex;
+  align-items:center;
+  gap:1.0dvw;
+  min-width:0;
+}
+
 .rank{
   font-weight:900;
   font-size:calc(min(2.0dvh,2.0dvw) * var(--scale));
-  width:3.5ch;flex:0 0 auto;
+  width:3.5ch;
+  flex:0 0 auto;
 }
+
 .logo{
   width:calc(min(3.0dvh,3.0dvw) * var(--scale));
   height:calc(min(3.0dvh,3.0dvw) * var(--scale));
   object-fit:contain;
-  image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;
+  image-rendering:-webkit-optimize-contrast;
+  image-rendering:crisp-edges;
 }
+
 .school{
   font-size:calc(min(2.2dvh,2.2dvw) * var(--scale));
-  font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+  font-weight:900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0;
 }
+
 .nickname{
   font-size:calc(min(1.85dvh,1.85dvw) * var(--scale));
-  font-weight:650;opacity:.85;margin-left:.35em;white-space:nowrap;
+  font-weight:650;
+  opacity:.85;
+  margin-left:.35em;
+  white-space:nowrap;
 }
-.rec,.site,.result{
+
+.rec, .site, .result{
   font-size:calc(min(1.85dvh,1.85dvw) * var(--scale));
-  font-weight:750;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;
+  font-weight:750;
+  opacity:.92;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:clip;
 }
+
 .rec{text-align:center;}
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
-/* Spectra-safe win/loss colors (tweak as needed for your panel) */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
@@ -132,12 +190,15 @@
   opacity:.85;
 }
 
-/* Compact mode spacing (device-agnostic) */
+/* Compact mode */
 .compact{padding:2.2dvh 2.4dvw;}
 .compact .header{margin-bottom:1.2dvh;}
-.compact .row{padding:0.34dvh 0;column-gap:1.1dvw;}
+.compact .row{
+  padding:0.34dvh 0;
+  column-gap:1.1dvw;
+}
 
-/* Portrait: slightly more breathing room on narrow width */
+/* Portrait handling */
 @media (max-aspect-ratio:1){
   .nd-container{padding:4dvh 4dvw;}
   .compact{padding:3dvh 3.5dvw;}
