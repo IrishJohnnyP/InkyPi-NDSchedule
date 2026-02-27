@@ -1,65 +1,75 @@
-/* NdSchedule CSS — +20% fonts globally; fixed columns widened; Opponent reduced; Date/Time -20% */
+/* NdSchedule CSS — full automatic display scaling, +20% fonts, Date −20%, Opponent expanded */
 
-/* Container and core variables */
+/* Container and global variables */
 .nd-container{
   width:100%; height:100%; box-sizing:border-box; padding:3dvh 3dvw;
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600; color: inherit;
 
-  /* Base device scale from inline style (set in HTML) */
-  --base-scale: 1.08;
-  --base-title-scale: 1.06;
+  /* Auto‑scale inputs from Python */
+  --base-scale: 1.08;            /* replaced by Python */
+  --base-title-scale: 1.06;      /* replaced by Python */
+  --squeeze: 0;                  /* replaced by Python */
 
-  /* Preset multipliers (controlled by .font-*) */
-  --scale-mult: 1.00;            /* content text scale multiplier */
-  --title-scale-mult: 1.00;      /* title text scale multiplier */
-  --date-scale-mult: 1.00;       /* date column additional width multiplier tied to font */
+  /* Font preset multipliers */
+  --scale-mult: 1.00;
+  --title-scale-mult: 1.00;
+  --date-scale-mult: 1.00;
 
-  /* Fixed-column width growth factor to match +20% fonts */
+  /* Column global scaling factor (syncs with +20% global fonts) */
   --col-scale-mult: 1.20;
 
-  /* Effective scales */
+  /* Final effective scales */
   --eff-scale: calc(var(--base-scale) * var(--scale-mult));
   --eff-title-scale: calc(var(--base-title-scale) * var(--title-scale-mult));
 
-  /* Auto-squeeze (0..0.35) supplied by Python */
-  --squeeze: 0;
-
-  /* Column factors (baselines)
-     - Date/Time reduced by 20%: 0.338 → 0.2704
+  /* Column baseline factors
+     Date column reduced by 20%: 0.338 → 0.2704
   */
   --date-col-factor: 0.2704;
   --rec-col-factor:  0.60;
   --site-col-factor: 0.60;
   --result-col-factor: 0.50;
 
-  /* Fixed columns after squeeze × factors × date/font/column multipliers */
-  --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor)   * var(--date-scale-mult) * var(--col-scale-mult));
-  --col-rec:    calc((7ch    - (1ch   * var(--squeeze))) * var(--rec-col-factor)    * var(--col-scale-mult));
-  --col-site:   calc((9ch    - (2ch   * var(--squeeze))) * var(--site-col-factor)   * var(--col-scale-mult));
-  --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor) * var(--col-scale-mult));
+  /* Computed column widths */
+  --col-date:   calc((29ch - (6ch * var(--squeeze)))
+                    * var(--date-col-factor)
+                    * var(--date-scale-mult)
+                    * var(--col-scale-mult));
+
+  --col-rec:    calc((7ch  - (1ch * var(--squeeze)))
+                    * var(--rec-col-factor)
+                    * var(--col-scale-mult));
+
+  --col-site:   calc((9ch  - (2ch * var(--squeeze)))
+                    * var(--site-col-factor)
+                    * var(--col-scale-mult));
+
+  --col-result: calc((11.5ch - (2.5ch * var(--squeeze)))
+                    * var(--result-col-factor)
+                    * var(--col-scale-mult));
 }
 
-/* Font presets: all +20% vs previous values */
+/* Font presets (+20% everything) */
 .font-normal {
   --scale-mult: 1.20;
   --title-scale-mult: 1.20;
   --date-scale-mult: 1.20;
 }
 .font-large  {
-  --scale-mult: 1.32;       /* was 1.10 → ×1.2 */
-  --title-scale-mult: 1.272;/* was 1.06 → ×1.2 */
-  --date-scale-mult: 1.344; /* was 1.12 → ×1.2 */
+  --scale-mult: 1.32;
+  --title-scale-mult: 1.272;
+  --date-scale-mult: 1.344;
 }
 .font-larger {
-  --scale-mult: 1.464;      /* was 1.22 → ×1.2 */
-  --title-scale-mult: 1.368;/* was 1.14 → ×1.2 */
-  --date-scale-mult: 1.488; /* was 1.24 → ×1.2 */
+  --scale-mult: 1.464;
+  --title-scale-mult: 1.368;
+  --date-scale-mult: 1.488;
 }
 .font-largest{
-  --scale-mult: 1.632;      /* was 1.36 → ×1.2 */
-  --title-scale-mult: 1.464;/* was 1.22 → ×1.2 */
-  --date-scale-mult: 1.656; /* was 1.38 → ×1.2 */
+  --scale-mult: 1.632;
+  --title-scale-mult: 1.464;
+  --date-scale-mult: 1.656;
 }
 
 /* Header */
@@ -74,14 +84,15 @@
 }
 .title{
   font-size:calc(min(4.0dvh,4.0dvw) * var(--eff-title-scale));
-  font-weight:850; line-height:1.1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-weight:850; line-height:1.1; min-width:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .update-line{
   font-size:calc(min(1.75dvh,1.75dvw) * var(--eff-scale));
   opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 
-/* Grid: Opponent column is fractional (3fr) to yield space to fixed columns */
+/* Grid: Opponent = 3fr so it expands after Date shrink */
 .colhdr,.row{
   display:grid;
   grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);
@@ -91,7 +102,8 @@
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{
   font-size:calc(min(1.40dvh,1.40dvw) * var(--eff-scale));
-  font-weight:900; letter-spacing:0.03em; text-transform:uppercase; text-align:center; white-space:nowrap;
+  font-weight:900; letter-spacing:0.03em;
+  text-transform:uppercase; text-align:center; white-space:nowrap;
 }
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
 .sep{height:1px;background: currentColor;width:100%;opacity:.22;}
@@ -118,21 +130,24 @@
 }
 .school{
   font-size:calc(min(2.2dvh,2.2dvw) * var(--eff-scale));
-  font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
+  font-weight:900; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; min-width:0;
 }
 .nickname{
   font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));
-  font-weight:650; opacity:.85; margin-left:.35em; white-space:nowrap;
+  font-weight:650; opacity:.85;
+  margin-left:.35em; white-space:nowrap;
 }
 .rec,.site,.result{
   font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));
-  font-weight:750; opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:clip;
+  font-weight:750; opacity:.92;
+  white-space:nowrap; overflow:hidden; text-overflow:clip;
 }
 .rec{text-align:center;}
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
-/* Win/Loss colors (monochrome-friendly devices may dither these) */
+/* Result colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
@@ -153,3 +168,4 @@
   .nd-container{padding:4dvh 4dvw;}
   .compact{padding:3dvh 3.5dvw;}
 }
+``
