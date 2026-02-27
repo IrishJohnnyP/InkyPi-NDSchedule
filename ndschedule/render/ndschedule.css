@@ -1,15 +1,26 @@
-/* NdSchedule CSS — full automatic display scaling, +20% fonts, Date −20%, Opponent expanded */
+/* NdSchedule CSS — whole-output scaling wrapper + automatic display scaling
+   - Wrapper .nd-scale-wrap scales the entire output regardless of viewport quirks
+   - Fonts +20%; Date column −20%; Opponent fractional (3fr); fixed columns widened
+*/
 
-/* Container and global variables */
+/* Whole-output scaling wrapper */
+.nd-scale-wrap{
+  transform: scale(var(--output-scale, 1));
+  transform-origin: top left;
+  width: calc(100% / max(var(--output-scale, 1), 0.0001));
+  height: calc(100% / max(var(--output-scale, 1), 0.0001));
+}
+
+/* Container and core variables */
 .nd-container{
   width:100%; height:100%; box-sizing:border-box; padding:3dvh 3dvw;
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600; color: inherit;
 
-  /* Auto‑scale inputs from Python */
-  --base-scale: 1.08;            /* replaced by Python */
-  --base-title-scale: 1.06;      /* replaced by Python */
-  --squeeze: 0;                  /* replaced by Python */
+  /* Auto-scale inputs from Python */
+  --base-scale: 1.08;            /* replaced inline */
+  --base-title-scale: 1.06;      /* replaced inline */
+  --squeeze: 0;                  /* replaced inline */
 
   /* Font preset multipliers */
   --scale-mult: 1.00;
@@ -36,15 +47,12 @@
                     * var(--date-col-factor)
                     * var(--date-scale-mult)
                     * var(--col-scale-mult));
-
   --col-rec:    calc((7ch  - (1ch * var(--squeeze)))
                     * var(--rec-col-factor)
                     * var(--col-scale-mult));
-
   --col-site:   calc((9ch  - (2ch * var(--squeeze)))
                     * var(--site-col-factor)
                     * var(--col-scale-mult));
-
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze)))
                     * var(--result-col-factor)
                     * var(--col-scale-mult));
@@ -84,8 +92,7 @@
 }
 .title{
   font-size:calc(min(4.0dvh,4.0dvw) * var(--eff-title-scale));
-  font-weight:850; line-height:1.1; min-width:0;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-weight:850; line-height:1.1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .update-line{
   font-size:calc(min(1.75dvh,1.75dvw) * var(--eff-scale));
@@ -102,8 +109,7 @@
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{
   font-size:calc(min(1.40dvh,1.40dvw) * var(--eff-scale));
-  font-weight:900; letter-spacing:0.03em;
-  text-transform:uppercase; text-align:center; white-space:nowrap;
+  font-weight:900; letter-spacing:0.03em; text-transform:uppercase; text-align:center; white-space:nowrap;
 }
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
 .sep{height:1px;background: currentColor;width:100%;opacity:.22;}
@@ -124,46 +130,37 @@
 .logo{
   width:calc(min(3.0dvh,3.0dvw) * var(--eff-scale));
   height:calc(min(3.0dvh,3.0dvw) * var(--eff-scale));
-  object-fit:contain;
-  image-rendering:-webkit-optimize-contrast;
-  image-rendering:crisp-edges;
+  object-fit:contain; image-rendering:-webkit-optimize-contrast; image-rendering:crisp-edges;
 }
 .school{
   font-size:calc(min(2.2dvh,2.2dvw) * var(--eff-scale));
-  font-weight:900; overflow:hidden; text-overflow:ellipsis;
-  white-space:nowrap; min-width:0;
+  font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
 }
 .nickname{
   font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));
-  font-weight:650; opacity:.85;
-  margin-left:.35em; white-space:nowrap;
+  font-weight:650; opacity:.85; margin-left:.35em; white-space:nowrap;
 }
 .rec,.site,.result{
   font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));
-  font-weight:750; opacity:.92;
-  white-space:nowrap; overflow:hidden; text-overflow:clip;
+  font-weight:750; opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:clip;
 }
 .rec{text-align:center;}
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
-/* Result colors */
+/* Win/Loss colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
 /* Footer */
-.footnote{
-  margin-top:1.0dvh;
-  font-size:calc(min(1.55dvh,1.55dvw) * var(--eff-scale));
-  opacity:.85;
-}
+.footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--eff-scale));opacity:.85;}
 
 /* Compact mode */
 .compact{padding:2.2dvh 2.4dvw;}
 .compact .header{margin-bottom:1.2dvh;}
 .compact .row{padding:0.34dvh 0;column-gap:1.1dvw;}
 
-/* Portrait handling */
+/* Portrait */
 @media (max-aspect-ratio:1){
   .nd-container{padding:4dvh 4dvw;}
   .compact{padding:3dvh 3.5dvw;}
