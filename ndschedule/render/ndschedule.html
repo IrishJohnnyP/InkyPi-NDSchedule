@@ -1,7 +1,6 @@
 {% extends "plugin.html" %}
 {% block content %}
-<div class="nd-container {{ display_class }} {% if compact_mode %}compact{% endif %} font-{{ font_size }}"
-     style="--base-scale: {{ auto_scale }}; --base-title-scale: {{ auto_title_scale }}; --squeeze: {{ auto_squeeze }};">
+<div class="nd-container {{ display_class }} {% if compact_mode %}compact{% endif %} font-{{ font_size }}" style="--scale: {{ auto_scale }}; --title-scale: {{ auto_title_scale }};">
   <div class="header">
     <div class="titlewrap">
       {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="Notre Dame logo">{% endif %}
