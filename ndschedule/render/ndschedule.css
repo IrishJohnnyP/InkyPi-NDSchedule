@@ -1,17 +1,27 @@
-/* NdSchedule CSS — whole-output scaling wrapper + automatic display scaling
-   - Wrapper .nd-scale-wrap scales the entire output regardless of viewport quirks
-   - Fonts +20%; Date column −20%; Opponent fractional (3fr); fixed columns widened
+/* NdSchedule CSS — fixed-base scaling: base 800x480 scaled to detected display
+   - Fonts +20%; Date column −20%; Fixed columns widened; Opponent 3fr
+   - True uniform scale with no aspect distortion (contain/cover in Python)
 */
 
-/* Whole-output scaling wrapper */
-.nd-scale-wrap{
-  transform: scale(var(--output-scale, 1));
-  transform-origin: top left;
-  width: calc(100% / max(var(--output-scale, 1), 0.0001));
-  height: calc(100% / max(var(--output-scale, 1), 0.0001));
+/* Outer wrapper fills the canvas and clips overflow */
+.nd-scale-outer{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* Container and core variables */
+/* Inner wrapper stays at base aspect and scales uniformly from its center */
+.nd-scale-inner{
+  position: absolute;
+  top: 50%; left: 50%;
+  width: calc(var(--base-w, 800) * 1px);
+  height: calc(var(--base-h, 480) * 1px);
+  transform: translate(-50%, -50%) scale(var(--output-scale, 1));
+  transform-origin: center center;
+}
+
+/* Main container */
 .nd-container{
   width:100%; height:100%; box-sizing:border-box; padding:3dvh 3dvw;
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
@@ -58,104 +68,46 @@
                     * var(--col-scale-mult));
 }
 
-/* Font presets (+20% everything) */
-.font-normal {
-  --scale-mult: 1.20;
-  --title-scale-mult: 1.20;
-  --date-scale-mult: 1.20;
-}
-.font-large  {
-  --scale-mult: 1.32;
-  --title-scale-mult: 1.272;
-  --date-scale-mult: 1.344;
-}
-.font-larger {
-  --scale-mult: 1.464;
-  --title-scale-mult: 1.368;
-  --date-scale-mult: 1.488;
-}
-.font-largest{
-  --scale-mult: 1.632;
-  --title-scale-mult: 1.464;
-  --date-scale-mult: 1.656;
-}
+/* Font presets: +20% */
+.font-normal { --scale-mult: 1.20; --title-scale-mult: 1.20; --date-scale-mult: 1.20; }
+.font-large  { --scale-mult: 1.32; --title-scale-mult: 1.272; --date-scale-mult: 1.344; }
+.font-larger { --scale-mult: 1.464; --title-scale-mult: 1.368; --date-scale-mult: 1.488; }
+.font-largest{ --scale-mult: 1.632; --title-scale-mult: 1.464; --date-scale-mult: 1.656; }
 
 /* Header */
 .header{display:flex;flex-direction:column;gap:0.6dvh;margin-bottom:1.8dvh;}
 .titlewrap{display:flex;align-items:center;gap:1.2dvw;min-width:0;}
-.title-logo{
-  width:calc(min(3.2dvh,3.2dvw) * var(--eff-scale));
-  height:calc(min(3.2dvh,3.2dvw) * var(--eff-scale));
-  object-fit:contain;
-  image-rendering:-webkit-optimize-contrast;
-  image-rendering:crisp-edges;
-}
-.title{
-  font-size:calc(min(4.0dvh,4.0dvw) * var(--eff-title-scale));
-  font-weight:850; line-height:1.1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.update-line{
-  font-size:calc(min(1.75dvh,1.75dvw) * var(--eff-scale));
-  opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
+.title-logo{width:calc(min(3.2dvh,3.2dvw) * var(--eff-scale));height:calc(min(3.2dvh,3.2dvw) * var(--eff-scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.title{font-size:calc(min(4.0dvh,4.0dvw) * var(--eff-title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--eff-scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Grid: Opponent = 3fr so it expands after Date shrink */
-.colhdr,.row{
-  display:grid;
-  grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);
-  align-items:center;
-  column-gap:1.4dvw;
-}
+/* Grid */
+.colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
-.colhdr .h{
-  font-size:calc(min(1.40dvh,1.40dvw) * var(--eff-scale));
-  font-weight:900; letter-spacing:0.03em; text-transform:uppercase; text-align:center; white-space:nowrap;
-}
+.colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--eff-scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
 .sep{height:1px;background: currentColor;width:100%;opacity:.22;}
 .row{padding:0.52dvh 0;}
 
-/* Cells */
-.date{
-  font-weight:760;
-  font-size:calc(min(2.0dvh,2.0dvw) * var(--eff-scale));
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
+.date{font-weight:760;font-size:calc(min(2.0dvh,2.0dvw) * var(--eff-scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .opp{display:flex;align-items:center;gap:1.0dvw;min-width:0;}
-.rank{
-  font-weight:900;
-  font-size:calc(min(2.0dvh,2.0dvw) * var(--eff-scale));
-  width:3.5ch; flex:0 0 auto;
-}
-.logo{
-  width:calc(min(3.0dvh,3.0dvw) * var(--eff-scale));
-  height:calc(min(3.0dvh,3.0dvw) * var(--eff-scale));
-  object-fit:contain; image-rendering:-webkit-optimize-contrast; image-rendering:crisp-edges;
-}
-.school{
-  font-size:calc(min(2.2dvh,2.2dvw) * var(--eff-scale));
-  font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
-}
-.nickname{
-  font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));
-  font-weight:650; opacity:.85; margin-left:.35em; white-space:nowrap;
-}
-.rec,.site,.result{
-  font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));
-  font-weight:750; opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:clip;
-}
+.rank{font-weight:900;font-size:calc(min(2.0dvh,2.0dvw) * var(--eff-scale));width:3.5ch;flex:0 0 auto;}
+.logo{width:calc(min(3.0dvh,3.0dvw) * var(--eff-scale));height:calc(min(3.0dvh,3.0dvw) * var(--eff-scale));object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.school{font-size:calc(min(2.2dvh,2.2dvw) * var(--eff-scale));font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.nickname{font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));font-weight:650;opacity:.85;margin-left:.35em;white-space:nowrap;}
+.rec,.site,.result{font-size:calc(min(1.85dvh,1.85dvw) * var(--eff-scale));font-weight:750;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .rec{text-align:center;}
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
 
-/* Win/Loss colors */
+/* Result colors */
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
 
 /* Footer */
 .footnote{margin-top:1.0dvh;font-size:calc(min(1.55dvh,1.55dvw) * var(--eff-scale));opacity:.85;}
 
-/* Compact mode */
+/* Compact */
 .compact{padding:2.2dvh 2.4dvw;}
 .compact .header{margin-bottom:1.2dvh;}
 .compact .row{padding:0.34dvh 0;column-gap:1.1dvw;}
