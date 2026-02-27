@@ -43,15 +43,12 @@
           for (const opt of selYear.options) { if (opt.value === currentDefault) { opt.selected = true; break; } }
         }
       }
-      // Font size
       if (pluginSettings && pluginSettings.font_size) {
         const fsSel = document.querySelector('select[name="font_size"]');
         if (fsSel) fsSel.value = String(pluginSettings.font_size);
       }
-      // Checkboxes
       const checks = ["show_time","show_rank","hide_rank","hide_nickname","hide_logo","large_mode","compact_mode"];
       for (const key of checks) { const el = document.querySelector(`input[name="${key}"]`); if (el) el.checked = !!pluginSettings[key]; }
-      // Cache
       if (pluginSettings && typeof pluginSettings.cache_minutes !== 'undefined') {
         const cm = document.querySelector('input[name="cache_minutes"]');
         if (cm) cm.value = String(pluginSettings.cache_minutes);
