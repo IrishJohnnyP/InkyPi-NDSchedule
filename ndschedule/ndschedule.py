@@ -1,1 +1,1 @@
-# NdSchedule placeholder; please reuse previous python file
+# NdSchedule placeholder; reuse your existing python file
