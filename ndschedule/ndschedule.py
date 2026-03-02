@@ -37,7 +37,7 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """Fixed-base 800x480 layout scaled with contain; body fonts +5%, title unchanged."""
+    """ND schedule plugin: fixed-base 800x480 scaled with contain."""
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
@@ -135,7 +135,7 @@ class NdSchedule(BasePlugin):
         }
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
-    # -------- HTTP / cache --------
+    # ---- HTTP + caching ----
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time(); ts = self._cache["ts"].get(url, 0.0)
         if ttl > 0 and url in self._cache["data"] and (now - ts) < ttl:
@@ -197,12 +197,13 @@ class NdSchedule(BasePlugin):
         except Exception:
             return {}
 
-    # -------- Rows / parsing --------
+    # ---- Build rows ----
     def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list):
             events = []
         rows: List[Dict[str, Any]] = []
+
         for ev in events:
             if not isinstance(ev, dict):
                 continue
@@ -257,6 +258,7 @@ class NdSchedule(BasePlugin):
             nd_score = self._safe_int(nd_side.get("score"))
             opp_score = self._safe_int(opp_side.get("score"))
             has_winner_flag = isinstance(nd_side.get("winner"), bool) or isinstance(opp_side.get("winner"), bool)
+
             result = ""; result_class = ""
             if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
                 if nd_score > opp_score:
@@ -277,9 +279,10 @@ class NdSchedule(BasePlugin):
                 "result": result,
                 "result_class": result_class,
             })
+
         return rows
 
-    # -------- Rankings --------
+    # --------------- Rankings ---------------
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
         polls = data.get("rankings")
@@ -357,7 +360,7 @@ class NdSchedule(BasePlugin):
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
 
-    # -------- Formatting --------
+    # --------------- Formatting helpers ---------------
     def _format_game_datetime(self, iso_str: str, show_time: bool=True) -> str:
         from datetime import datetime, timezone
         if not iso_str:
@@ -409,7 +412,7 @@ class NdSchedule(BasePlugin):
         tzinfo = self._eastern_tz()
         try:
             if date_str.isdigit() and len(date_str) >= 12:
-                dt = datetime.fromtimestamp(int(date_str)/1000, tz=timezone.utc)
+                dt = datetime.fromtimestamp(int(date_str) / 1000, tz=timezone.utc)
             elif date_str.isdigit():
                 dt = datetime.fromtimestamp(int(date_str), tz=timezone.utc)
             else:
@@ -425,7 +428,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             return ""
 
-    # -------- Misc helpers --------
+    # --------------- Misc helpers ---------------
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
             if v is None:
@@ -550,7 +553,6 @@ class NdSchedule(BasePlugin):
         return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
 
     def _to_bool(self, v: Any) -> bool:
-        """Coerce common setting/form values to boolean."""
         if isinstance(v, bool):
             return v
         if v is None:
