@@ -1,54 +1,37 @@
 /* NdSchedule CSS — Fixed-base 800x480 + contain scaling wrapper
-   - Fonts: +10% over the current working version
-   - Date column -20% (0.2704)
-   - Layout lifted ~3 lines
+   - Body fonts: +5% over current working version
+   - Title size unchanged (keeps prior title multipliers)
 */
 
 .nd-scale-outer{ position: relative; width:100%; height:100%; overflow:hidden; }
-
-.nd-scale-inner{
-  position: absolute;
-  top: 50%; left: 50%;
-  width: calc(var(--base-w, 800) * 1px);
-  height: calc(var(--base-h, 480) * 1px);
-  transform: translate(-50%, -50%) scale(var(--output-scale, 1));
-  transform-origin: center center;
-}
+.nd-scale-inner{ position:absolute; top:50%; left:50%; width:calc(var(--base-w,800)*1px); height:calc(var(--base-h,480)*1px); transform:translate(-50%,-50%) scale(var(--output-scale,1)); transform-origin:center center; }
 
 .nd-container{
   --vmin: 4.8px;
-
   width:100%; height:100%; box-sizing:border-box;
   padding: 6px 24px 14px 24px;
-
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600;
-
   --squeeze: 0;
-
-  /* Preset multipliers */
   --scale-mult: 1.00;
   --title-scale-mult: 1.00;
   --date-scale-mult: 1.00;
-
   --col-scale-mult: 1.20;
-
   --date-col-factor: 0.2704;
   --rec-col-factor: 0.60;
   --site-col-factor: 0.60;
   --result-col-factor: 0.50;
-
   --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor)   * var(--date-scale-mult) * var(--col-scale-mult));
   --col-rec:    calc((7ch    - (1ch   * var(--squeeze))) * var(--rec-col-factor)    * var(--col-scale-mult));
   --col-site:   calc((9ch    - (2ch   * var(--squeeze))) * var(--site-col-factor)   * var(--col-scale-mult));
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor) * var(--col-scale-mult));
 }
 
-/* Font presets: previous values × 1.10 (adds +10% to all fonts) */
-.font-normal { --scale-mult: 1.32;  --title-scale-mult: 1.32;  --date-scale-mult: 1.32; }
-.font-large  { --scale-mult: 1.452; --title-scale-mult: 1.3992; --date-scale-mult: 1.4784; }
-.font-larger { --scale-mult: 1.6104; --title-scale-mult: 1.5048; --date-scale-mult: 1.6368; }
-.font-largest{ --scale-mult: 1.7952; --title-scale-mult: 1.6104; --date-scale-mult: 1.8216; }
+/* Body fonts ×1.05; title unchanged (keeps original title-scale-mult) */
+.font-normal { --scale-mult: 1.26;   --title-scale-mult: 1.20;  --date-scale-mult: 1.26; }
+.font-large  { --scale-mult: 1.386;  --title-scale-mult: 1.272; --date-scale-mult: 1.4112; }
+.font-larger { --scale-mult: 1.5372; --title-scale-mult: 1.368; --date-scale-mult: 1.5624; }
+.font-largest{ --scale-mult: 1.7136; --title-scale-mult: 1.464; --date-scale-mult: 1.7388; }
 
 .header{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
 .titlewrap{display:flex;align-items:center;gap:12px;min-width:0;}
