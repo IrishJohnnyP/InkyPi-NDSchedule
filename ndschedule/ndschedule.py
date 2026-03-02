@@ -37,8 +37,6 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """Notre Dame schedule with fixed-base layout (800x480) and contain scaling."""
-
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
     def generate_settings_template(self):
@@ -65,7 +63,6 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
-        # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
             font_size = "largest"
@@ -79,7 +76,6 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Output dims for renderer
         dims = device_config.get_resolution()
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
@@ -92,11 +88,10 @@ class NdSchedule(BasePlugin):
         output_scale = min(w / BASE_W, h / BASE_H) if BASE_W and BASE_H else 1.0
         output_scale = max(0.10, min(5.00, output_scale))
 
-        # Keep squeeze heuristic (optional)
+        # Squeeze heuristic
         short_edge = min(w, h)
         squeeze = 0.0 if short_edge >= 700 else max(0.0, min(0.35, (700 - short_edge) / 700.0 * 0.35))
 
-        # Season year
         current_year = self._detect_current_season_year(ttl)
         selected = settings.get("season_year")
         try:
@@ -104,7 +99,6 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
-        # Data
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
@@ -133,7 +127,6 @@ class NdSchedule(BasePlugin):
             "hide_rank": bool(hide_rank),
             "hide_nickname": bool(hide_nickname),
             "hide_logo": bool(hide_logo),
-            # fixed-base scaling
             "base_w": BASE_W,
             "base_h": BASE_H,
             "output_scale": f"{output_scale:.4f}",
