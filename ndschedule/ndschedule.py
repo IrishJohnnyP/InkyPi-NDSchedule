@@ -67,13 +67,9 @@ class NdSchedule(BasePlugin):
 
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
-            font_size = "largest"
-            compact_mode = False
-            show_time = True
-            show_rank_setting = True
-            hide_rank = False
-            hide_nickname = False
-            hide_logo = False
+            font_size = "largest"; compact_mode = False
+            show_time = True; show_rank_setting = True
+            hide_rank = False; hide_nickname = False; hide_logo = False
 
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
@@ -203,7 +199,6 @@ class NdSchedule(BasePlugin):
         if not isinstance(events, list):
             events = []
         rows: List[Dict[str, Any]] = []
-
         for ev in events:
             if not isinstance(ev, dict):
                 continue
@@ -258,7 +253,6 @@ class NdSchedule(BasePlugin):
             nd_score = self._safe_int(nd_side.get("score"))
             opp_score = self._safe_int(opp_side.get("score"))
             has_winner_flag = isinstance(nd_side.get("winner"), bool) or isinstance(opp_side.get("winner"), bool)
-
             result = ""; result_class = ""
             if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
                 if nd_score > opp_score:
@@ -279,7 +273,6 @@ class NdSchedule(BasePlugin):
                 "result": result,
                 "result_class": result_class,
             })
-
         return rows
 
     # --------------- Rankings ---------------
