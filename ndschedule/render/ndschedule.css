@@ -1,15 +1,23 @@
-/* Fixed-base 800x480 + contain scaling wrapper
-   Option A: shifted down (top:52%)
-   Fonts increased by +20% across all presets.
+/* Option A: shifted down slightly; add safe margins and enlarge ND logo proportional to title.
+   Fonts: +20% (all presets).
 */
 
 .nd-scale-outer{ position: relative; width:100%; height:100%; overflow:hidden; }
-.nd-scale-inner{ position:absolute; top:52%; left:50%; width:calc(var(--base-w,800)*1px); height:calc(var(--base-h,480)*1px); transform:translate(-50%,-50%) scale(var(--output-scale,1)); transform-origin:center center; }
+
+/* Add a small shrink to avoid top/bottom clipping on some panels */
+.nd-scale-inner{
+  position:absolute;
+  top: 51.5%; left: 50%;
+  width: calc(var(--base-w,800) * 1px);
+  height: calc(var(--base-h,480) * 1px);
+  transform: translate(-50%,-50%) scale(calc(var(--output-scale,1) * 0.985));
+  transform-origin: center center;
+}
 
 .nd-container{
   --vmin: 4.8px;
   width:100%; height:100%; box-sizing:border-box;
-  padding: 6px 24px 8px 24px;
+  padding: 8px 24px 10px 24px;
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600;
   --squeeze: 0;
@@ -27,16 +35,38 @@
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor) * var(--col-scale-mult));
 }
 
-/* Presets ×1.20 (from previous values) */
+/* Font presets (+20% from previous Option A baseline) */
 .font-normal { --scale-mult: 1.512;  --title-scale-mult: 1.44;   --date-scale-mult: 1.512; }
 .font-large  { --scale-mult: 1.6632; --title-scale-mult: 1.5264; --date-scale-mult: 1.6934; }
 .font-larger { --scale-mult: 1.8446; --title-scale-mult: 1.6416; --date-scale-mult: 1.8749; }
 .font-largest{ --scale-mult: 2.0563; --title-scale-mult: 1.7568; --date-scale-mult: 2.0866; }
 
-.header{display:flex;flex-direction:column;gap:3px;margin-bottom:5px;}
+.header{display:flex;flex-direction:column;gap:3px;margin-bottom:6px;}
 .titlewrap{display:flex;align-items:flex-start;gap:10px;min-width:0;}
-.title-logo{width:18px;height:18px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;flex:0 0 auto;margin-top:2px;}
-.title{font-size:calc(3.6 * var(--vmin) * var(--title-scale-mult));font-weight:850;line-height:1.05;min-width:0;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+
+/* Make logo proportional to title size */
+.title-logo{
+  width: calc(3.6 * var(--vmin) * var(--title-scale-mult));
+  height: calc(3.6 * var(--vmin) * var(--title-scale-mult));
+  object-fit:contain;
+  image-rendering:-webkit-optimize-contrast;
+  image-rendering:crisp-edges;
+  flex:0 0 auto;
+  margin-top:2px;
+}
+
+.title{
+  font-size:calc(3.6 * var(--vmin) * var(--title-scale-mult));
+  font-weight:850;
+  line-height:1.05;
+  min-width:0;
+  white-space:normal;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+
 .update-line{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:12px;}
@@ -58,7 +88,9 @@
 .result{text-align:right;font-weight:950;}
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
-.footnote{margin-top:3px;font-size:calc(1.30 * var(--vmin) * var(--scale-mult));opacity:.85;}
-.compact{padding: 4px 18px 6px 18px;}
-.compact .header{margin-bottom:4px;}
+
+.footnote{margin-top:4px;font-size:calc(1.30 * var(--vmin) * var(--scale-mult));opacity:.85;}
+
+.compact{padding: 6px 18px 8px 18px;}
+.compact .header{margin-bottom:5px;}
 .compact .row{padding:0 0;column-gap:10px;}
