@@ -37,15 +37,7 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """ND Football schedule plugin.
-
-    Resolution scaling:
-      - Uses base canvas 800x480.
-      - resolution_scale = min(W/800, H/480).
-      - Passes resolution_scale to CSS as --resolution-scale.
-      - Sets --base-scale = resolution_scale so all text scales.
-      - CSS multiplies fixed-column widths by --resolution-scale.
-    """
+    """Notre Dame schedule with fixed-base layout (800x480) and contain scaling."""
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
@@ -87,7 +79,7 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Device resolution
+        # Output dims for renderer
         dims = device_config.get_resolution()
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
@@ -96,15 +88,11 @@ class NdSchedule(BasePlugin):
         except Exception:
             w, h = BASE_W, BASE_H
 
-        # Resolution scaling relative to 800x480
-        resolution_scale = min(w / BASE_W, h / BASE_H) if BASE_W and BASE_H else 1.0
-        resolution_scale = max(0.50, min(3.00, resolution_scale))
+        # Contain scaling from base 800x480
+        output_scale = min(w / BASE_W, h / BASE_H) if BASE_W and BASE_H else 1.0
+        output_scale = max(0.10, min(5.00, output_scale))
 
-        # Typography scale follows resolution scale
-        scale = resolution_scale
-        title_scale = 0.96 + (scale - 1.0) * 0.55
-
-        # Squeeze (keep existing heuristic)
+        # Keep squeeze heuristic (optional)
         short_edge = min(w, h)
         squeeze = 0.0 if short_edge >= 700 else max(0.0, min(0.35, (700 - short_edge) / 700.0 * 0.35))
 
@@ -145,12 +133,11 @@ class NdSchedule(BasePlugin):
             "hide_rank": bool(hide_rank),
             "hide_nickname": bool(hide_nickname),
             "hide_logo": bool(hide_logo),
-            "display_class": "display-auto",
-            # scaling vars
-            "auto_scale": f"{scale:.4f}",
-            "auto_title_scale": f"{title_scale:.4f}",
+            # fixed-base scaling
+            "base_w": BASE_W,
+            "base_h": BASE_H,
+            "output_scale": f"{output_scale:.4f}",
             "auto_squeeze": f"{squeeze:.4f}",
-            "resolution_scale": f"{resolution_scale:.4f}",
             "plugin_settings": settings,
         }
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
@@ -255,7 +242,6 @@ class NdSchedule(BasePlugin):
             school = self._choose_school(opp_team, opp_meta)
             nickname = self._nickname_v22(opp_meta if opp_meta else opp_team, school)
 
-            # logo
             logo = ""
             logos = opp_team.get("logos")
             if isinstance(logos, list):
