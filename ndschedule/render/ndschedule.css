@@ -1,9 +1,15 @@
-/* Fixed-base 800x480 + contain scaling wrapper
-   Body fonts +5% (relative to working baseline), title unchanged.
+/* NdSchedule CSS — Fixed-base 800x480 + contain scaling wrapper
+   Keeps your "known-good" layout choices without dvh/dvw double-scaling.
+   - Fonts +20% presets
+   - Date column -20% (0.2704)
+   - Layout lifted ~3 lines (top padding)
+   - Columns rebalanced with Opponent = 3fr
 */
 
+/* Outer fills full canvas */
 .nd-scale-outer{ position: relative; width:100%; height:100%; overflow:hidden; }
 
+/* Inner is base size and scaled uniformly (contain) */
 .nd-scale-inner{
   position: absolute;
   top: 50%; left: 50%;
@@ -13,43 +19,55 @@
   transform-origin: center center;
 }
 
+/* Base viewport min unit for 800x480: min(8px, 4.8px) = 4.8px */
 .nd-container{
   --vmin: 4.8px;
+
   width:100%; height:100%; box-sizing:border-box;
+  /* lift ~3 lines: top 1.2dvh≈5.8px -> 6px; left/right 24px; bottom 14px */
   padding: 6px 24px 14px 24px;
+
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600;
+
+  /* Squeeze passed from Python */
   --squeeze: 0;
 
+  /* Font preset multipliers (+20%) */
   --scale-mult: 1.00;
   --title-scale-mult: 1.00;
   --date-scale-mult: 1.00;
 
+  /* Column scale mult keeps your styling (1.20) */
   --col-scale-mult: 1.20;
 
-  --date-col-factor: 0.2704;
+  /* Column factors */
+  --date-col-factor: 0.2704; /* 0.338×0.8 */
   --rec-col-factor: 0.60;
   --site-col-factor: 0.60;
   --result-col-factor: 0.50;
 
+  /* Column widths */
   --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor)   * var(--date-scale-mult) * var(--col-scale-mult));
   --col-rec:    calc((7ch    - (1ch   * var(--squeeze))) * var(--rec-col-factor)    * var(--col-scale-mult));
   --col-site:   calc((9ch    - (2ch   * var(--squeeze))) * var(--site-col-factor)   * var(--col-scale-mult));
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor) * var(--col-scale-mult));
 }
 
-/* Body fonts ×1.05; title unchanged */
-.font-normal { --scale-mult: 1.26;   --title-scale-mult: 1.20;  --date-scale-mult: 1.26; }
-.font-large  { --scale-mult: 1.386;  --title-scale-mult: 1.272; --date-scale-mult: 1.4112; }
-.font-larger { --scale-mult: 1.5372; --title-scale-mult: 1.368; --date-scale-mult: 1.5624; }
-.font-largest{ --scale-mult: 1.7136; --title-scale-mult: 1.464; --date-scale-mult: 1.7388; }
+/* Font presets: +20% */
+.font-normal { --scale-mult: 1.20; --title-scale-mult: 1.20; --date-scale-mult: 1.20; }
+.font-large  { --scale-mult: 1.32; --title-scale-mult: 1.272; --date-scale-mult: 1.344; }
+.font-larger { --scale-mult: 1.464; --title-scale-mult: 1.368; --date-scale-mult: 1.488; }
+.font-largest{ --scale-mult: 1.632; --title-scale-mult: 1.464; --date-scale-mult: 1.656; }
 
+/* Header */
 .header{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
 .titlewrap{display:flex;align-items:center;gap:12px;min-width:0;}
 .title-logo{width:22px;height:22px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
 .title{font-size:calc(4.0 * var(--vmin) * var(--title-scale-mult));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(1.7 * var(--vmin) * var(--scale-mult));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+/* Grid */
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:14px;}
 .colhdr{padding:2px 0 2px 0;}
 .colhdr .h{font-size:calc(1.35 * var(--vmin) * var(--scale-mult));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
@@ -73,6 +91,7 @@
 
 .footnote{margin-top:8px;font-size:calc(1.5 * var(--vmin) * var(--scale-mult));opacity:.85;}
 
+/* Compact mode */
 .compact{padding: 4px 18px 10px 18px;}
 .compact .header{margin-bottom:6px;}
 .compact .row{padding:3px 0;column-gap:12px;}
