@@ -1,21 +1,10 @@
 /* Fixed-base 800x480 + contain scaling wrapper
-   Body fonts +5% (relative to baseline), title unchanged.
-   Fixes:
-   - Shifted entire layout down (top: 52%) to avoid top-edge clipping.
-   - Title cutoff at Largest: allow wrap (2 lines) + slightly smaller title only for Largest.
-   - Footnote not displayed: tighten header/rows/footnote spacing.
+   Option A: shifted down (top:52%)
+   Fonts increased by +20% across all presets.
 */
 
 .nd-scale-outer{ position: relative; width:100%; height:100%; overflow:hidden; }
-
-.nd-scale-inner{
-  position: absolute;
-  top: 52%; left: 50%;
-  width: calc(var(--base-w, 800) * 1px);
-  height: calc(var(--base-h, 480) * 1px);
-  transform: translate(-50%, -50%) scale(var(--output-scale, 1));
-  transform-origin: center center;
-}
+.nd-scale-inner{ position:absolute; top:52%; left:50%; width:calc(var(--base-w,800)*1px); height:calc(var(--base-h,480)*1px); transform:translate(-50%,-50%) scale(var(--output-scale,1)); transform-origin:center center; }
 
 .nd-container{
   --vmin: 4.8px;
@@ -24,56 +13,34 @@
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600;
   --squeeze: 0;
-
   --scale-mult: 1.00;
   --title-scale-mult: 1.00;
   --date-scale-mult: 1.00;
-
   --col-scale-mult: 1.20;
-
   --date-col-factor: 0.2704;
   --rec-col-factor: 0.60;
   --site-col-factor: 0.60;
   --result-col-factor: 0.50;
-
   --col-date:   calc((29ch   - (6ch   * var(--squeeze))) * var(--date-col-factor)   * var(--date-scale-mult) * var(--col-scale-mult));
   --col-rec:    calc((7ch    - (1ch   * var(--squeeze))) * var(--rec-col-factor)    * var(--col-scale-mult));
   --col-site:   calc((9ch    - (2ch   * var(--squeeze))) * var(--site-col-factor)   * var(--col-scale-mult));
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor) * var(--col-scale-mult));
 }
 
-/* Body fonts ×1.05; title unchanged */
-.font-normal { --scale-mult: 1.26;   --title-scale-mult: 1.20;  --date-scale-mult: 1.26; }
-.font-large  { --scale-mult: 1.386;  --title-scale-mult: 1.272; --date-scale-mult: 1.4112; }
-.font-larger { --scale-mult: 1.5372; --title-scale-mult: 1.368; --date-scale-mult: 1.5624; }
-.font-largest{ --scale-mult: 1.7136; --title-scale-mult: 1.464; --date-scale-mult: 1.7388; }
+/* Presets ×1.20 (from previous values) */
+.font-normal { --scale-mult: 1.512;  --title-scale-mult: 1.44;   --date-scale-mult: 1.512; }
+.font-large  { --scale-mult: 1.6632; --title-scale-mult: 1.5264; --date-scale-mult: 1.6934; }
+.font-larger { --scale-mult: 1.8446; --title-scale-mult: 1.6416; --date-scale-mult: 1.8749; }
+.font-largest{ --scale-mult: 2.0563; --title-scale-mult: 1.7568; --date-scale-mult: 2.0866; }
 
-/* Header tighter */
 .header{display:flex;flex-direction:column;gap:3px;margin-bottom:5px;}
 .titlewrap{display:flex;align-items:flex-start;gap:10px;min-width:0;}
 .title-logo{width:18px;height:18px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;flex:0 0 auto;margin-top:2px;}
-
-/* Allow title wrap; cap to 2 lines */
-.title{
-  font-size:calc(3.6 * var(--vmin) * var(--title-scale-mult));
-  font-weight:850;
-  line-height:1.05;
-  min-width:0;
-  white-space:normal;
-  overflow:hidden;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-}
-
-/* Slightly reduce title size only for Largest */
-.font-largest .title{ font-size:calc(3.25 * var(--vmin) * var(--title-scale-mult)); }
-
+.title{font-size:calc(3.6 * var(--vmin) * var(--title-scale-mult));font-weight:850;line-height:1.05;min-width:0;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .update-line{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Grid tighter */
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:12px;}
-.colhdr{padding:1px 0 1px 0;}
+.colhdr{padding:1px 0;}
 .colhdr .h{font-size:calc(1.20 * var(--vmin) * var(--scale-mult));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
 .sep{height:1px;background: currentColor;width:100%;opacity:.22;}
@@ -89,12 +56,9 @@
 .rec{text-align:center;}
 .site{text-align:center;}
 .result{text-align:right;font-weight:950;}
-
 .result.win{ color: rgb(0,255,0); }
 .result.lose{ color: rgb(255,0,0); }
-
 .footnote{margin-top:3px;font-size:calc(1.30 * var(--vmin) * var(--scale-mult));opacity:.85;}
-
 .compact{padding: 4px 18px 6px 18px;}
 .compact .header{margin-bottom:4px;}
-.compact .row{padding:0px 0;column-gap:10px;}
+.compact .row{padding:0 0;column-gap:10px;}

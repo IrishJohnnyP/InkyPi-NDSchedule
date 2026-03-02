@@ -1,12 +1,8 @@
 {% extends "plugin.html" %}
 {% block content %}
-
 <div class="nd-scale-outer">
   <div class="nd-scale-inner" style="--base-w: {{ base_w }}; --base-h: {{ base_h }}; --output-scale: {{ output_scale }};">
-
-    <div class="nd-container {% if compact_mode %}compact{% endif %} font-{{ font_size }}"
-         style="--squeeze: {{ auto_squeeze }};">
-
+    <div class="nd-container {% if compact_mode %}compact{% endif %} font-{{ font_size }}" style="--squeeze: {{ auto_squeeze }};">
       <div class="header">
         <div class="titlewrap">
           {% if nd_logo %}<img class="title-logo" src="{{ nd_logo }}" alt="Notre Dame logo">{% endif %}
@@ -14,7 +10,6 @@
         </div>
         {% if update_line %}<div class="update-line">{{ update_line }}</div>{% endif %}
       </div>
-
       <div class="colhdr">
         <div class="h">{% if show_time %}DATE / TIME{% else %}DATE{% endif %}</div>
         <div class="h">OPPONENT</div>
@@ -23,7 +18,6 @@
         <div class="h">RESULT</div>
       </div>
       <div class="sep"></div>
-
       {% for g in rows %}
       <div class="row">
         <div class="date">{{ g.date }}</div>
@@ -38,11 +32,8 @@
       </div>
       {% if not loop.last %}<div class="sep"></div>{% endif %}
       {% endfor %}
-
       <div class="footnote">* All times Eastern</div>
-
     </div>
   </div>
 </div>
-
 {% endblock %}
