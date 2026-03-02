@@ -15,6 +15,9 @@ RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-f
 LEAGUE_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football?lang=en&region=us"
 ND_LOGO_URL = "https://a.espncdn.com/i/teamlogos/ncaa/500/87.png"
 
+BASE_W = 800
+BASE_H = 480
+
 
 def _ensure_icon_file():
     try:
@@ -34,6 +37,16 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
+    """ND Football schedule plugin.
+
+    Resolution scaling:
+      - Uses base canvas 800x480.
+      - resolution_scale = min(W/800, H/480).
+      - Passes resolution_scale to CSS as --resolution-scale.
+      - Sets --base-scale = resolution_scale so all text scales.
+      - CSS multiplies fixed-column widths by --resolution-scale.
+    """
+
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
     def generate_settings_template(self):
@@ -60,6 +73,7 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
+        # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
             font_size = "largest"
@@ -73,19 +87,28 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
+        # Device resolution
         dims = device_config.get_resolution()
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
-
         try:
-            short_edge = min(int(dims[0]), int(dims[1]))
+            w = int(dims[0]); h = int(dims[1])
         except Exception:
-            short_edge = 480
+            w, h = BASE_W, BASE_H
 
-        scale = max(0.90, min(1.65, short_edge / 480.0))
+        # Resolution scaling relative to 800x480
+        resolution_scale = min(w / BASE_W, h / BASE_H) if BASE_W and BASE_H else 1.0
+        resolution_scale = max(0.50, min(3.00, resolution_scale))
+
+        # Typography scale follows resolution scale
+        scale = resolution_scale
         title_scale = 0.96 + (scale - 1.0) * 0.55
+
+        # Squeeze (keep existing heuristic)
+        short_edge = min(w, h)
         squeeze = 0.0 if short_edge >= 700 else max(0.0, min(0.35, (700 - short_edge) / 700.0 * 0.35))
 
+        # Season year
         current_year = self._detect_current_season_year(ttl)
         selected = settings.get("season_year")
         try:
@@ -93,6 +116,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
+        # Data
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
@@ -122,14 +146,16 @@ class NdSchedule(BasePlugin):
             "hide_nickname": bool(hide_nickname),
             "hide_logo": bool(hide_logo),
             "display_class": "display-auto",
-            "auto_scale": f"{scale:.3f}",
-            "auto_title_scale": f"{title_scale:.3f}",
-            "auto_squeeze": f"{squeeze:.3f}",
+            # scaling vars
+            "auto_scale": f"{scale:.4f}",
+            "auto_title_scale": f"{title_scale:.4f}",
+            "auto_squeeze": f"{squeeze:.4f}",
+            "resolution_scale": f"{resolution_scale:.4f}",
             "plugin_settings": settings,
         }
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
-    # ---------- HTTP + cache ----------
+    # ---------- HTTP + caching ----------
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time(); ts = self._cache["ts"].get(url, 0.0)
         if ttl > 0 and url in self._cache["data"] and (now - ts) < ttl:
@@ -137,7 +163,8 @@ class NdSchedule(BasePlugin):
         session = get_http_session(); resp = session.get(url, timeout=25); resp.raise_for_status()
         data = resp.json()
         if ttl > 0:
-            self._cache["ts"][url] = now; self._cache["data"][url] = data
+            self._cache["ts"][url] = now
+            self._cache["data"][url] = data
         return data
 
     def _detect_current_season_year(self, ttl: int) -> int:
@@ -190,7 +217,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             return {}
 
-    # ---------- Build rows ----------
+    # ---------- Rows ----------
     def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list):
@@ -228,7 +255,7 @@ class NdSchedule(BasePlugin):
             school = self._choose_school(opp_team, opp_meta)
             nickname = self._nickname_v22(opp_meta if opp_meta else opp_team, school)
 
-            # Logo
+            # logo
             logo = ""
             logos = opp_team.get("logos")
             if isinstance(logos, list):
@@ -273,6 +300,7 @@ class NdSchedule(BasePlugin):
                 "result": result,
                 "result_class": result_class,
             })
+
         return rows
 
     # ---------- Rankings ----------
@@ -421,7 +449,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             return ""
 
-    # ---------- Misc ----------
+    # ---------- Misc helpers ----------
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
             if v is None:
