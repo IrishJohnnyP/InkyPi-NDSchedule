@@ -1,28 +1,34 @@
-/* NdSchedule CSS — KNOWN-GOOD BASE (+20% fonts, column rebalanced), with Date -20% and top lift */
+/* NdSchedule CSS — Known-good formatting + resolution scaling (base 800x480)
+   - Fonts and fixed columns scale with --resolution-scale
+   - Preset multipliers keep your +20% font styling
+*/
 
 .nd-container{
   width:100%; height:100%; box-sizing:border-box;
-  padding:1.2dvh 3dvw 3dvh 3dvw; /* lift content ~3 lines (top reduced from 3dvh) */
+  padding:1.2dvh 3dvw 3dvh 3dvw; /* lifted layout */
   font-family:"Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight:600; color: inherit;
 
-  /* Base device scale from inline style */
-  --base-scale: 1.08;
-  --base-title-scale: 1.06;
+  /* Base device scale (set inline from Python) */
+  --base-scale: 1.0;
+  --base-title-scale: 1.0;
+
+  /* Resolution scale (set inline from Python) */
+  --resolution-scale: 1;
 
   /* Preset multipliers */
   --scale-mult: 1.00;
   --title-scale-mult: 1.00;
   --date-scale-mult: 1.00;
 
-  /* Keep fixed columns aligned with +20% fonts */
-  --col-scale-mult: 1.20;
+  /* Fixed-column width growth factor: style (1.20) × resolution */
+  --col-scale-mult: calc(1.20 * var(--resolution-scale, 1));
 
   /* Effective scales */
   --eff-scale: calc(var(--base-scale) * var(--scale-mult));
   --eff-title-scale: calc(var(--base-title-scale) * var(--title-scale-mult));
 
-  /* Squeeze passed from Python */
+  /* Auto-squeeze from Python */
   --squeeze: 0;
 
   /* Column factors (Date -20% from 0.338) */
@@ -38,7 +44,7 @@
   --col-result: calc((11.5ch - (2.5ch * var(--squeeze))) * var(--result-col-factor) * var(--col-scale-mult));
 }
 
-/* Font presets: +20% */
+/* Font presets (+20% styling) */
 .font-normal { --scale-mult: 1.20;  --title-scale-mult: 1.20;  --date-scale-mult: 1.20; }
 .font-large  { --scale-mult: 1.32;  --title-scale-mult: 1.272; --date-scale-mult: 1.344; }
 .font-larger { --scale-mult: 1.464; --title-scale-mult: 1.368; --date-scale-mult: 1.488; }
@@ -51,7 +57,7 @@
 .title{font-size:calc(min(4.0dvh,4.0dvw) * var(--eff-title-scale));font-weight:850;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .update-line{font-size:calc(min(1.75dvh,1.75dvw) * var(--eff-scale));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* Grid: Opponent 3fr absorbs freed space */
+/* Grid: Opponent is fractional */
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:1.4dvw;}
 .colhdr{padding:0.30dvh 0 0.26dvh 0;}
 .colhdr .h{font-size:calc(min(1.40dvh,1.40dvw) * var(--eff-scale));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
