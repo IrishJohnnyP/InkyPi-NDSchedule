@@ -37,7 +37,7 @@ _ensure_icon_file()
 
 
 class NdSchedule(BasePlugin):
-    """Notre Dame schedule with fixed-base layout (800x480) and contain scaling."""
+    """Fixed-base 800x480 layout scaled with contain; body fonts +5%, title unchanged."""
 
     _cache: Dict[str, Any] = {"ts": {}, "data": {}}
 
@@ -65,7 +65,6 @@ class NdSchedule(BasePlugin):
         hide_nickname = self._to_bool(settings.get("hide_nickname", False))
         hide_logo = self._to_bool(settings.get("hide_logo", False))
 
-        # Large Mode preset
         large_mode = self._to_bool(settings.get("large_mode", False))
         if large_mode:
             font_size = "largest"
@@ -79,7 +78,6 @@ class NdSchedule(BasePlugin):
         cache_minutes = max(0, min(1440, int(settings.get("cache_minutes") or 30)))
         ttl = cache_minutes * 60
 
-        # Output dims for renderer
         dims = device_config.get_resolution()
         if device_config.get_config("orientation") == "vertical":
             dims = dims[::-1]
@@ -88,15 +86,12 @@ class NdSchedule(BasePlugin):
         except Exception:
             w, h = BASE_W, BASE_H
 
-        # Contain scaling from base 800x480
         output_scale = min(w / BASE_W, h / BASE_H) if BASE_W and BASE_H else 1.0
         output_scale = max(0.10, min(5.00, output_scale))
 
-        # Keep squeeze heuristic (optional)
         short_edge = min(w, h)
         squeeze = 0.0 if short_edge >= 700 else max(0.0, min(0.35, (700 - short_edge) / 700.0 * 0.35))
 
-        # Season year
         current_year = self._detect_current_season_year(ttl)
         selected = settings.get("season_year")
         try:
@@ -104,7 +99,6 @@ class NdSchedule(BasePlugin):
         except Exception:
             season_year = current_year
 
-        # Data
         sched = self._fetch_schedule_for_year(ND_TEAM_ID, season_year, ttl)
         nd_logo = self._fetch_team_logo(ttl)
 
@@ -133,7 +127,6 @@ class NdSchedule(BasePlugin):
             "hide_rank": bool(hide_rank),
             "hide_nickname": bool(hide_nickname),
             "hide_logo": bool(hide_logo),
-            # fixed-base scaling
             "base_w": BASE_W,
             "base_h": BASE_H,
             "output_scale": f"{output_scale:.4f}",
@@ -142,7 +135,7 @@ class NdSchedule(BasePlugin):
         }
         return self.render_image(dims, "ndschedule.html", "ndschedule.css", template_params)
 
-    # ---------- HTTP + caching ----------
+    # -------- HTTP / cache --------
     def _fetch_json_cached(self, url: str, ttl: int) -> Dict[str, Any]:
         now = time.time(); ts = self._cache["ts"].get(url, 0.0)
         if ttl > 0 and url in self._cache["data"] and (now - ts) < ttl:
@@ -204,13 +197,12 @@ class NdSchedule(BasePlugin):
         except Exception:
             return {}
 
-    # ---------- Rows ----------
+    # -------- Rows / parsing --------
     def _build_rows(self, sched: Dict[str, Any], rank_map: Dict[str, int], show_rank: bool, season_year: int, ttl: int, show_time: bool=True) -> List[Dict[str, Any]]:
         events = sched.get("events") or []
         if not isinstance(events, list):
             events = []
         rows: List[Dict[str, Any]] = []
-
         for ev in events:
             if not isinstance(ev, dict):
                 continue
@@ -265,7 +257,6 @@ class NdSchedule(BasePlugin):
             nd_score = self._safe_int(nd_side.get("score"))
             opp_score = self._safe_int(opp_side.get("score"))
             has_winner_flag = isinstance(nd_side.get("winner"), bool) or isinstance(opp_side.get("winner"), bool)
-
             result = ""; result_class = ""
             if nd_score is not None and opp_score is not None and (self._is_finalish(comp) or has_winner_flag):
                 if nd_score > opp_score:
@@ -286,10 +277,9 @@ class NdSchedule(BasePlugin):
                 "result": result,
                 "result_class": result_class,
             })
-
         return rows
 
-    # ---------- Rankings ----------
+    # -------- Rankings --------
     def _get_rank_map(self, ttl: int) -> Tuple[Dict[str, int], str, str]:
         data = self._fetch_json_cached(RANKINGS_URL, ttl)
         polls = data.get("rankings")
@@ -367,7 +357,7 @@ class NdSchedule(BasePlugin):
         rank_map = {k: v for k, v in rank_map.items() if 1 <= v <= 25}
         return rank_map, label, updated_fmt
 
-    # ---------- Formatting ----------
+    # -------- Formatting --------
     def _format_game_datetime(self, iso_str: str, show_time: bool=True) -> str:
         from datetime import datetime, timezone
         if not iso_str:
@@ -435,7 +425,7 @@ class NdSchedule(BasePlugin):
         except Exception:
             return ""
 
-    # ---------- Misc helpers ----------
+    # -------- Misc helpers --------
     def _safe_int(self, v: Any) -> Optional[int]:
         try:
             if v is None:
@@ -560,6 +550,7 @@ class NdSchedule(BasePlugin):
         return f"{wins}-{losses}-{ties}" if ties else f"{wins}-{losses}"
 
     def _to_bool(self, v: Any) -> bool:
+        """Coerce common setting/form values to boolean."""
         if isinstance(v, bool):
             return v
         if v is None:
