@@ -1,6 +1,7 @@
 /* Fixed-base 800x480 + contain scaling wrapper
    Body fonts +5% (relative to baseline), title unchanged.
    Fixes:
+   - Shifted entire layout down (top: 52%) to avoid top-edge clipping.
    - Title cutoff at Largest: allow wrap (2 lines) + slightly smaller title only for Largest.
    - Footnote not displayed: tighten header/rows/footnote spacing.
 */
@@ -9,7 +10,7 @@
 
 .nd-scale-inner{
   position: absolute;
-  top: 50%; left: 50%;
+  top: 52%; left: 50%;
   width: calc(var(--base-w, 800) * 1px);
   height: calc(var(--base-h, 480) * 1px);
   transform: translate(-50%, -50%) scale(var(--output-scale, 1));
