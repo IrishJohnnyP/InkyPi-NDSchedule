@@ -78,7 +78,7 @@
   -webkit-box-orient:vertical;
 }
 
-.update-line{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.update-line{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));opacity:1.00;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:12px;}
 .colhdr{padding:1px 0;}
@@ -87,16 +87,16 @@
 .colhdr .h {
   color: var(--spec-black);
 }
-.sep{height:2px;background: currentColor;width:100%;opacity:.99;}
+.sep{height:2px;background: currentColor;width:100%;opacity:1.00;}
 .row{padding:1px 0;}
 
 .date{font-weight:800;font-size:calc(1.80 * var(--vmin) * var(--scale-mult));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .opp{display:flex;align-items:center;gap:8px;min-width:0;}
 .rank{font-weight:900;font-size:calc(1.80 * var(--vmin) * var(--scale-mult));width:3.5ch;flex:0 0 auto;}
-.logo{width:20px;height:20px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;opacity:0.95;}
+.logo{width:20px;height:20px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;opacity:1.00;}
 .school{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.nickname{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.85;margin-left:.35em;white-space:nowrap;}
-.rec,.site,.result{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.nickname{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.75;margin-left:.35em;white-space:nowrap;}
+.rec,.site,.result{font-size:calc(1.60 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:1.00;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .rec{text-align:center;}
 .site{text-align:left;}
 .result{text-align:left;font-weight:900;}
