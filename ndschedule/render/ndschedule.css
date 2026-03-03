@@ -18,7 +18,7 @@
 /* Add a small shrink to avoid top/bottom clipping on some panels */
 .nd-scale-inner{
   position:absolute;
-  top: 51.0%; left: 50%;
+  top: 52.0%; left: 50%;
   width: calc(var(--base-w,800) * 1px);
   height: calc(var(--base-h,480) * 1px);
   transform: translate(-50%,-50%) scale(calc(var(--output-scale,1) * 0.982));
