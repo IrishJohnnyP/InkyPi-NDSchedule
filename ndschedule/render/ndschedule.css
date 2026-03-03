@@ -98,8 +98,8 @@
 .nickname{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.85;margin-left:.35em;white-space:nowrap;}
 .rec,.site,.result{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .rec{text-align:center;}
-.site{text-align:center;}
-.result{text-align:right;font-weight:900;}
+.site{text-align:left;}
+.result{text-align:left;font-weight:900;}
 .result.win {
   color: var(--spec-black);
   font-weight: 900;
