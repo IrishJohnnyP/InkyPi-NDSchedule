@@ -87,7 +87,7 @@
 .colhdr .h {
   color: var(--spec-black);
 }
-.sep{height:2px;background: currentColor;width:100%;opacity:.90;}
+.sep{height:2px;background: currentColor;width:100%;opacity:.99;}
 .row{padding:1px 0;}
 
 .date{font-weight:800;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -95,8 +95,8 @@
 .rank{font-weight:900;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));width:3.5ch;flex:0 0 auto;}
 .logo{width:20px;height:20px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;opacity:0.95;}
 .school{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.nickname{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.85;margin-left:.35em;white-space:nowrap;}
-.rec,.site,.result{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));font-weight:750;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.nickname{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.85;margin-left:.35em;white-space:nowrap;}
+.rec,.site,.result{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .rec{text-align:center;}
 .site{text-align:center;}
 .result{text-align:right;font-weight:900;}
