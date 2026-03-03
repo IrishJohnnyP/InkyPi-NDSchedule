@@ -68,7 +68,7 @@
 
 .title{
   font-size:calc(3.6 * var(--vmin) * var(--title-scale-mult));
-  font-weight:850;
+  font-weight:900;
   line-height:1.05;
   min-width:0;
   white-space:normal;
@@ -93,7 +93,7 @@
 .date{font-weight:800;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .opp{display:flex;align-items:center;gap:8px;min-width:0;}
 .rank{font-weight:900;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));width:3.5ch;flex:0 0 auto;}
-.logo{width:18px;height:18px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;opacity:0.85;}
+.logo{width:20px;height:20px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;opacity:0.95;}
 .school{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .nickname{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.85;margin-left:.35em;white-space:nowrap;}
 .rec,.site,.result{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));font-weight:750;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
