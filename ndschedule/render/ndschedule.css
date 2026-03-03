@@ -2,6 +2,17 @@
    Fonts: +20% (all presets).
 */
 
+/* ===== Spectra 6 tuned colors (muted, print-like) ===== */
+:root {
+  --spec-black: #000000;
+
+  /* Muted colors map better to Spectra 6 pigments */
+  --spec-red:   #8f2a2a;   /* losses */
+  --spec-green: #5f7f5a;   /* wins (optional) */
+  --spec-blue:  #4f6fa3;   /* headers / accents */
+  --spec-yellow:#e5d65a;
+}
+
 .nd-scale-outer{ position: relative; width:100%; height:100%; overflow:hidden; }
 
 /* Add a small shrink to avoid top/bottom clipping on some panels */
@@ -71,25 +82,34 @@
 
 .colhdr,.row{display:grid;grid-template-columns: var(--col-date) 3fr var(--col-rec) var(--col-site) var(--col-result);align-items:center;column-gap:12px;}
 .colhdr{padding:1px 0;}
-.colhdr .h{font-size:calc(1.20 * var(--vmin) * var(--scale-mult));font-weight:900;letter-spacing:0.03em;text-transform:uppercase;text-align:center;white-space:nowrap;}
+.colhdr .h{font-size:calc(1.20 * var(--vmin) * var(--scale-mult));font-weight:900;letter-spacing:0.04em;text-transform:uppercase;text-align:center;white-space:nowrap;}
 .colhdr .h:nth-child(3){text-align:left;padding-left:0.25ch;}
-.sep{height:1px;background: currentColor;width:100%;opacity:.22;}
+.colhdr .h {
+  color: var(--spec-blue);
+}
+.sep{height:2px;background: currentColor;width:100%;opacity:.30;}
 .row{padding:1px 0;}
 
-.date{font-weight:760;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.date{font-weight:800;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .opp{display:flex;align-items:center;gap:8px;min-width:0;}
 .rank{font-weight:900;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));width:3.5ch;flex:0 0 auto;}
-.logo{width:16px;height:16px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.logo{width:16px;height:16px;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;opacity:0.85;}
 .school{font-size:calc(1.80 * var(--vmin) * var(--scale-mult));font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.nickname{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));font-weight:650;opacity:.85;margin-left:.35em;white-space:nowrap;}
+.nickname{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));font-weight:900;opacity:.85;margin-left:.35em;white-space:nowrap;}
 .rec,.site,.result{font-size:calc(1.50 * var(--vmin) * var(--scale-mult));font-weight:750;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .rec{text-align:center;}
 .site{text-align:center;}
-.result{text-align:right;font-weight:950;}
-.result.win{ color: rgb(0,255,0); }
-.result.lose{ color: rgb(255,0,0); }
+.result{text-align:right;font-weight:900;}
+.result.win {
+  color: var(--spec-black);
+  font-weight: 900;
+}
+.result.lose {
+  color: var(--spec-red);
+  font-weight: 900;
+}
 
-.footnote{margin-top:3px;font-size:calc(1.30 * var(--vmin) * var(--scale-mult));opacity:.85;}
+.footnote{margin-top:3px;font-size:calc(1.30 * var(--vmin) * var(--scale-mult));opacity:.75;}
 
 .compact{padding: 6px 18px 8px 18px;}
 .compact .header{margin-bottom:5px;}
