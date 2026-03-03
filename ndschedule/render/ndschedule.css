@@ -87,7 +87,7 @@
 .colhdr .h {
   color: var(--spec-black);
 }
-.sep{height:2px;background: currentColor;width:100%;opacity:.30;}
+.sep{height:2px;background: currentColor;width:100%;opacity:.90;}
 .row{padding:1px 0;}
 
 .date{font-weight:800;font-size:calc(1.70 * var(--vmin) * var(--scale-mult));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
